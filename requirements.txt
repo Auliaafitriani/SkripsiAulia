@@ -1,9 +1,6 @@
 streamlit
-streamlit-option-menu
-numpy
 pandas
-geopandas
-branca
-folium
-streamlit-folium
+numpy
+matplotlib
+seaborn
 scikit-learn
