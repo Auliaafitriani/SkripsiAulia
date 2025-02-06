@@ -6,6 +6,7 @@ import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import silhouette_score
 import random
+from sklearn.manifold import TSNE
 
 class PSOKMedoids:
     def __init__(self, data, n_clusters, random_state=42, max_iter=100, n_particles=30, w=0.7, c1=1.5, c2=1.5):
@@ -21,10 +22,6 @@ class PSOKMedoids:
         # Set seed untuk reproducibilitas
         np.random.seed(self.random_state)
         random.seed(self.random_state)
-
-    def optimize(self):
-        # Gunakan random_state untuk inisialisasi
-        particles = [random.sample(range(len(self.data)), self.n_clusters) for _ in range(self.n_particles)]
 
     def euclidean_distance(self, point1, point2):
         return np.sqrt(np.sum((point1 - point2) ** 2))
@@ -114,6 +111,72 @@ def weighted_normalize(df):
 
     return df_normalized
 
+def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0.13):
+    # Ekstrak fitur dan label
+    features = df_clustered.drop(columns=['ID', 'PEKERJAAN', 'Cluster']).values
+    labels = df_clustered['Cluster'].values
+    medoids = cluster_info['medoids']
+    medoid_features = features[medoids]
+
+    # Terapkan t-SNE
+    tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(features) - 1))
+    features_2d = tsne.fit_transform(features)
+
+    # t-SNE untuk medoids
+    tsne_medoids = TSNE(n_components=2, random_state=42, perplexity=min(30, len(medoid_features) - 1))
+    medoid_2d = tsne_medoids.fit_transform(medoid_features)
+
+    # Kompresi jarak ke medoids
+    for i in range(len(np.unique(labels))):
+        mask = labels == i
+        cluster_points = features_2d[mask]
+
+        # Hitung vektor dari medoid ke titik
+        vectors = cluster_points - medoid_2d[i]
+
+        # Kompresi vektor
+        compressed_vectors = vectors * compression_factor
+
+        # Terapkan posisi terkompresi
+        features_2d[mask] = medoid_2d[i] + compressed_vectors
+
+    # Buat plot
+    plt.figure(figsize=(12, 8))
+
+    # Gunakan warna berbeda
+    colors = plt.cm.husl(np.linspace(0, 1, len(np.unique(labels))))
+
+    # Plot titik dan garis
+    for i, color in enumerate(colors):
+        mask = labels == i
+        cluster_points = features_2d[mask]
+
+        # Plot titik
+        plt.scatter(cluster_points[:, 0], cluster_points[:, 1],
+                   c=[color], label=f'Cluster {i}',
+                   alpha=0.7, s=100)
+
+        # Gambar garis ke medoid dengan alpha rendah
+        for point in cluster_points:
+            plt.plot([medoid_2d[i, 0], point[0]],
+                    [medoid_2d[i, 1], point[1]],
+                    c=color, alpha=0.2, linewidth=0.5)
+
+    # Plot medoids
+    plt.scatter(medoid_2d[:, 0], medoid_2d[:, 1],
+               c='red', marker='*', s=800,
+               label='Medoids', edgecolor='black', linewidth=2)
+
+    plt.title('Visualisasi Clustering K-Medoids', fontsize=14, pad=20)
+    plt.xlabel('Komponen t-SNE 1', fontsize=12)
+    plt.ylabel('Komponen t-SNE 2', fontsize=12)
+
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left',
+              borderaxespad=0., fontsize=10)
+
+    plt.tight_layout()
+    return plt
+
 def perform_clustering(df_normalized, n_clusters=5):
     data = df_normalized.drop(columns=['ID', 'PEKERJAAN']).values
     pso = PSOKMedoids(data, n_clusters=n_clusters)
@@ -125,7 +188,8 @@ def perform_clustering(df_normalized, n_clusters=5):
     return df_clustered, {
         'medoids': optimal_medoids, 
         'silhouette_score': silhouette, 
-        'cluster_sizes': distribution
+        'cluster_sizes': distribution,
+        'medoid_rows': df_normalized.iloc[optimal_medoids]
     }
 
 def main():
@@ -161,21 +225,29 @@ def main():
             st.write("### Informasi Cluster")
             st.write(f"Silhouette Score: {cluster_info['silhouette_score']:.4f}")
             
-            # Distribusi cluster
-            st.write("Distribusi Cluster:")
-            cluster_dist = pd.DataFrame({
-                'Cluster': range(len(cluster_info['cluster_sizes'])),
-                'Jumlah Anggota': cluster_info['cluster_sizes']
-            })
-            st.dataframe(cluster_dist)
+            # Distribusi cluster dengan format yang diinginkan
+            st.write("### Distribusi Cluster:")
+            cluster_distribution = ""
+            for i, count in enumerate(cluster_info['cluster_sizes']):
+                cluster_distribution += f"Cluster {i}: {count} titik data\n"
+            st.text(cluster_distribution)
 
             # Visualisasi distribusi cluster
             plt.figure(figsize=(10, 6))
-            plt.bar(cluster_dist['Cluster'], cluster_dist['Jumlah Anggota'])
+            plt.bar(range(len(cluster_info['cluster_sizes'])), cluster_info['cluster_sizes'])
             plt.title('Distribusi Anggota Cluster')
             plt.xlabel('Cluster')
             plt.ylabel('Jumlah Anggota')
             st.pyplot(plt)
+
+            # Tampilkan Informasi Medoid Terbaik
+            st.write("### Medoid Terbaik")
+            st.dataframe(cluster_info['medoid_rows'])
+
+            # Visualisasi Cluster dengan t-SNE
+            st.write("### Visualisasi Cluster")
+            plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
+            st.pyplot(plt_tsne)
 
             # Tombol untuk download hasil clustering
             csv = df_clustered.to_csv(index=False)
