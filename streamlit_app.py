@@ -8,7 +8,7 @@ from sklearn.metrics import silhouette_score
 import random
 
 class PSOKMedoids:
-    def __init__(self, data, n_clusters, max_iter=100, n_particles=30, w=0.7, c1=1.5, c2=1.5):
+    def __init__(self, data, n_clusters, random_state=42, max_iter=100, n_particles=30, w=0.7, c1=1.5, c2=1.5):
         self.data = data
         self.n_clusters = n_clusters
         self.max_iter = max_iter
@@ -16,6 +16,15 @@ class PSOKMedoids:
         self.w = w
         self.c1 = c1
         self.c2 = c2
+        self.random_state = random_state
+        
+        # Set seed untuk reproducibilitas
+        np.random.seed(self.random_state)
+        random.seed(self.random_state)
+
+    def optimize(self):
+        # Gunakan random_state untuk inisialisasi
+        particles = [random.sample(range(len(self.data)), self.n_clusters) for _ in range(self.n_particles)]
 
     def euclidean_distance(self, point1, point2):
         return np.sqrt(np.sum((point1 - point2) ** 2))
