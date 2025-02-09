@@ -191,7 +191,7 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
 def main():
     # Sidebar for navigation
     with st.sidebar:
-        selected = option_menu('Government Aid Priorities Dashboard',
+        selected = option_menu('PriorityAid Analytics Dashboard',
                            ['About', 'Upload Data', 'Preprocessing', 
                             'PSO and K-Medoids Results'],
                            menu_icon='cast',
@@ -203,12 +203,11 @@ def main():
         st.markdown("© 2025 Copyright by Aulia Nur Fitriani")
 
     if selected == 'About':
-        st.title('Government Aid Priorities Dashboard')
+        st.title('PriorityAid Analytics Dashboard')
         st.write("""
-        Optimasi K-Medoids dengan Particle Swarm Optimization bertujuan untuk menentukan prioritas bantuan pemerintah di Desa Kalipuro. 
-        Proyek ini menggunakan metode K-Medoids untuk mengelompokkan data dan Particle Swarm Optimization untuk meningkatkan efisiensi pengelompokan. 
-        Dashboard ini dirancang untuk membantu pemangku kepentingan dalam memahami data dan hasil analisis yang dilakukan. 
-        Dengan menggunakan visualisasi interaktif, pengguna dapat mengeksplorasi data dan hasil pengelompokan dengan lebih baik.
+            PriorityAid Analytics Dashboard adalah platform analisis berbasis data yang dirancang untuk meningkatkan ketepatan distribusi bantuan pemerintah di Desa Kalipuro. 
+            Proyek ini mengoptimalkan metode K-Medoids dengan Particle Swarm Optimization (PSO) untuk meningkatkan efisiensi dan akurasi dalam pengelompokan penerima bantuan, memastikan distribusi yang lebih adil dan tepat sasaran. 
+            Dengan visualisasi interaktif, pemangku kepentingan dapat dengan mudah memahami pola distribusi, mengevaluasi hasil analisis, serta mengidentifikasi tren penerima bantuan secara lebih transparan dan berbasis data, sehingga proses pengambilan keputusan menjadi lebih efektif.
         """)
 
     elif selected == 'Upload Data':
