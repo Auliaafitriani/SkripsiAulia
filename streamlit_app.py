@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from streamlit_option_menu import option_menu
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import silhouette_score
 import random
 from sklearn.manifold import TSNE
@@ -134,6 +134,7 @@ def main():
                 st.success('Preprocessing selesai!')
             except Exception as e:
                 st.error(f'Error saat preprocessing: {str(e)}')
+                
     elif selected == 'PSO and K-Medoids Results':
         st.title('PSO and K-Medoids Analysis')
     
