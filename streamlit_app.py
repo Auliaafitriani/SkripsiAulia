@@ -317,7 +317,7 @@ Cluster 4: 94 titik data
     cluster_info = {
         'silhouette_score': silhouette_avg,
         'cluster_sizes': cluster_sizes,
-        'medoid_rows': df.iloc[medoid_indices],
+        'medoid_rows': df.iloc[list(medoid_indices)],  # Ubah ke list
         'medoid_indices': medoid_indices,
         'best_cost': best_cost
     }
