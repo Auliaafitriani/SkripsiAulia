@@ -189,16 +189,23 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     return plt
 
 def main():
-    # Custom CSS untuk mengurangi scrolling
+    # Custom CSS untuk menghilangkan scrollbar dan membatasi tinggi sidebar
     st.markdown("""
     <style>
     .sidebar .sidebar-content {
         display: flex;
         flex-direction: column;
-        padding: 5px !important;
+        height: 100vh;
+        overflow-y: hidden;
+        padding: 10px !important;
     }
-    .sidebar .sidebar-content > * {
-        margin-bottom: 5px !important;
+    .stSidebar {
+        max-height: 100vh;
+        overflow-y: hidden;
+    }
+    .sidebar-scroll {
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -209,6 +216,9 @@ def main():
         st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
                  width=100,  # Perkecil ukuran logo
                  use_container_width=True)
+        
+        # Gunakan div untuk membatasi scrolling
+        st.markdown('<div class="sidebar-scroll">', unsafe_allow_html=True)
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -238,11 +248,14 @@ def main():
                                },
                            })
         
+        # Tutup div sidebar-scroll
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Info versi dengan styling minimal
         st.markdown("""
         <div style="text-align:center; padding:5px; background-color:#f0f2f6; border-radius:5px;">
-            <small style="color:#7f8c8d; font-size:10px;">Versi 1.0</small><br>
-            <small style="color:#7f8c8d; font-size:10px;">© 2025 Aulia Nur Fitriani</small>
+            <small style="color:#7f8c8d; font-size:12px;">Versi 1.0</small><br>
+            <small style="color:#7f8c8d; font-size:12px;">© 2025 Aulia Nur Fitriani</small>
         </div>
         """, unsafe_allow_html=True)
 
