@@ -50,7 +50,40 @@ def main():
     elif selected == 'Preprocessing':
         st.title('Data Preprocessing')
         
-        if st.session_state['original_data'] is None:
+        # Definisikan fungsi weighted_normalize
+        def weighted_normalize(df):
+            # Simpan kolom ID dan PEKERJAAN sebagai DataFrame terpisah
+            id_column = df[['ID', 'PEKERJAAN']]
+
+            # Pilih hanya kolom numerik untuk normalisasi
+            df_numeric = df.drop(columns=['ID', 'PEKERJAAN'])
+
+            # Definisi bobot
+            weights = {
+                'JUMLAH ASET MOBIL': 4,
+                'JUMLAH ASET MOTOR': 1,
+                'JUMLAH ASET RUMAH/TANAH/SAWAH': 5,
+                'PENDAPATAN': 6
+            }
+
+            # Inisialisasi MinMaxScaler
+            scaler = MinMaxScaler()
+
+            # Normalisasi kolom numerik
+            normalized_data = scaler.fit_transform(df_numeric)
+            df_normalized = pd.DataFrame(normalized_data, columns=df_numeric.columns)
+
+            # Terapkan bobot
+            for col in df_normalized.columns:
+                if col in weights:
+                    df_normalized[col] *= weights[col]
+
+            # Gabungkan kembali kolom ID dan PEKERJAAN
+            df_normalized = pd.concat([id_column, df_normalized], axis=1)
+
+            return df_normalized
+        
+        if 'original_data' not in st.session_state or st.session_state['original_data'] is None:
             st.warning('Silakan upload data terlebih dahulu pada halaman Upload Data')
             return
             
