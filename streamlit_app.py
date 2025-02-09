@@ -236,6 +236,78 @@ def main():
                             file_name=f'hasil_clustering_k{n_clusters}.csv',
                             mime='text/csv'
                         )
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
+def perform_clustering(df, n_clusters):
+    # Pisahkan kolom yang tidak akan di-cluster
+    non_cluster_columns = ['ID', 'PEKERJAAN']
+    cluster_columns = [col for col in df.columns if col not in non_cluster_columns]
+    
+    # Persiapkan data untuk clustering
+    X = df[cluster_columns].values
+    
+    # Standarisasi data
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # Inisialisasi medoids secara acak
+    medoid_indices = np.random.choice(len(X_scaled), n_clusters, replace=False)
+    
+    # Fungsi untuk menghitung jarak
+    def calculate_distances(X, medoids):
+        distances = np.zeros((len(X), len(medoids)))
+        for i, medoid in enumerate(medoids):
+            distances[:, i] = np.linalg.norm(X - X[medoid], axis=1)
+        return distances
+    
+    # Iterasi untuk memperbaiki medoids
+    max_iterations = 100
+    for _ in range(max_iterations):
+        # Assign cluster
+        distances = calculate_distances(X_scaled, medoid_indices)
+        clusters = np.argmin(distances, axis=1)
+        
+        # Update medoids
+        new_medoids = medoid_indices.copy()
+        for i in range(n_clusters):
+            cluster_points = X_scaled[clusters == i]
+            if len(cluster_points) > 0:
+                # Cari titik terdekat dengan rata-rata cluster sebagai medoid baru
+                cluster_center = np.mean(cluster_points, axis=0)
+                new_medoid_idx = np.argmin(np.linalg.norm(cluster_points - cluster_center, axis=1))
+                new_medoids[i] = np.where((X_scaled == cluster_points[new_medoid_idx]).all(axis=1))[0][0]
+        
+        # Cek apakah medoids tidak berubah
+        if np.array_equal(new_medoids, medoid_indices):
+            break
+        
+        medoid_indices = new_medoids
+    
+    # Hitung silhouette score
+    try:
+        silhouette_avg = silhouette_score(X_scaled, clusters)
+    except:
+        silhouette_avg = 0
+    
+    # Tambahkan kolom cluster ke dataframe
+    df_clustered = df.copy()
+    df_clustered['Cluster'] = clusters
+    
+    # Informasi cluster
+    cluster_info = {
+        'silhouette_score': silhouette_avg,
+        'cluster_sizes': [np.sum(clusters == i) for i in range(n_clusters)],
+        'medoid_rows': df.iloc[medoid_indices],
+        'medoid_indices': medoid_indices
+    }
+    
+    return df_clustered, cluster_info
+
 def visualize_kmedoids_clusters(df_clustered, cluster_info):
     # Ekstrak data untuk visualisasi
     cluster_columns = [col for col in df_clustered.columns if col not in ['ID', 'PEKERJAAN', 'Cluster']]
