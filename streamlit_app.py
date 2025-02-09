@@ -194,8 +194,8 @@ def main():
         # Tambahkan judul utama dengan styling
         st.markdown("""
         <div style="background-color:#f0f2f6; padding:15px; border-radius:10px; text-align:center;">
-            <h2 style="color:#2c3e50; margin-bottom:10px;">PriorityAid</h2>
-            <p style="color:#34495e; font-size:12px;">Analytics Dashboard</p>
+            <h2 style="color:#2c3e50; margin-bottom:20px;">PriorityAid</h2>
+            <p style="color:#34495e; font-size:19px;">Analytics Dashboard</p>
         </div>
         """, unsafe_allow_html=True)
 
