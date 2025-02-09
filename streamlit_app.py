@@ -100,7 +100,94 @@ def perform_clustering(df_normalized, n_clusters=5):
     }
     
     return df_clustered, cluster_info
-     
+
+def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0.13):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from sklearn.manifold import TSNE
+    import seaborn as sns
+
+    # Extract features and labels
+    features = df_clustered.drop(columns=['ID', 'PEKERJAAN', 'Cluster']).values
+    labels = df_clustered['Cluster'].values
+
+    # Get medoids
+    # Pastikan 'medoids' adalah kunci yang benar dalam cluster_info
+    medoids = cluster_info.get('medoids', cluster_info.get('medoid_indices', []))
+    
+    # Pastikan medoids berisi indeks yang valid
+    medoids = [m for m in medoids if m < len(features)]
+    
+    # Hindari error jika medoids kosong
+    if not medoids:
+        plt.figure(figsize=(10, 6))
+        plt.text(0.5, 0.5, 'Tidak dapat membuat visualisasi', 
+                 horizontalalignment='center', 
+                 verticalalignment='center')
+        return plt
+
+    medoid_features = features[medoids]
+
+    # Apply t-SNE with adjusted perplexity for medoids
+    tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(features) - 1))
+    features_2d = tsne.fit_transform(features)
+
+    # Use a smaller perplexity for medoids
+    tsne_medoids = TSNE(n_components=2, random_state=42, perplexity=min(30, len(medoid_features) - 1))
+    medoid_2d = tsne_medoids.fit_transform(medoid_features)
+
+    # Compress distances to medoids
+    for i in range(len(np.unique(labels))):
+        mask = labels == i
+        cluster_points = features_2d[mask]
+
+        # Hitung vektor dari medoid ke titik
+        if i < len(medoid_2d):
+            vectors = cluster_points - medoid_2d[i]
+
+            # Kompresi vektor
+            compressed_vectors = vectors * compression_factor
+
+            # Terapkan posisi terkompresi
+            features_2d[mask] = medoid_2d[i] + compressed_vectors
+
+    # Plot
+    plt.figure(figsize=(12, 8))
+
+    # Gunakan warna berbeda
+    colors = plt.cm.husl(np.linspace(0, 1, len(np.unique(labels))))
+
+    # Plot titik dan garis
+    for i, color in enumerate(colors):
+        mask = labels == i
+        cluster_points = features_2d[mask]
+        
+        # Plot titik
+        plt.scatter(cluster_points[:, 0], cluster_points[:, 1],
+                   c=[color], label=f'Cluster {i}',
+                   alpha=0.7, s=100)
+        
+        # Gambar garis ke medoid dengan alpha rendah
+        if i < len(medoid_2d):
+            for point in cluster_points:
+                plt.plot([medoid_2d[i, 0], point[0]],
+                        [medoid_2d[i, 1], point[1]],
+                        c=color, alpha=0.2, linewidth=0.5)
+
+    # Plot medoids
+    plt.scatter(medoid_2d[:, 0], medoid_2d[:, 1],
+               c='red', marker='*', s=800,
+               label='Medoids', edgecolor='black', linewidth=2)
+
+    plt.title('Visualisasi Clustering K-Medoids', fontsize=14, pad=20)
+    plt.xlabel('Komponen t-SNE 1', fontsize=12)
+    plt.ylabel('Komponen t-SNE 2', fontsize=12)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left',
+              borderaxespad=0., fontsize=10)
+    plt.tight_layout()
+    
+    return plt
+
 def main():
     # Sidebar for navigation
     with st.sidebar:
