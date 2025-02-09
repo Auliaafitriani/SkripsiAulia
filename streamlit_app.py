@@ -135,9 +135,9 @@ def main():
             except Exception as e:
                 st.error(f'Error saat preprocessing: {str(e)}')
     elif selected == 'PSO and K-Medoids Results':
-         st.title('PSO and K-Medoids Analysis')
+        st.title('PSO and K-Medoids Analysis')
     
-         # Tampilkan parameter PSO
+        # Tampilkan parameter PSO
         st.write("### Parameter PSO yang Digunakan")
         st.write("""
         - w (inertia weight) = 0.7
