@@ -196,7 +196,7 @@ def main():
         st.image("https://img.icons8.com/fluency/96/government-building.png", width=100, use_column_width="always")
 
         # Judul utama dengan styling minimal
-        st.markdown("<h2 style='text-align: center; color: #2c3e50; margin-bottom: 20px;'>PriorityAid</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #2c3e50; margin-bottom: 20px;'>PriorityAid Analytics Dashboard</h2>", unsafe_allow_html=True)
 
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -219,9 +219,6 @@ def main():
                                    "color": "white"
                                },
                            })
-        
-        # Copyright dengan styling minimal
-        st.markdown("<div style='text-align:center; font-size:12px; color:#7f8c8d; margin-top:10px;'>© 2025 Aulia Nur Fitriani</div>", unsafe_allow_html=True)
         
         # Info versi dengan styling
         st.markdown("""
