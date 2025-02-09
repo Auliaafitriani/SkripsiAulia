@@ -205,7 +205,7 @@ def main():
                            default_index=0,
                            styles={
                                "container": {
-                                   "padding": "2px", 
+                                   "padding": "0px", 
                                    "background-color": "#f0f2f6"
                                },
                                "icon": {
