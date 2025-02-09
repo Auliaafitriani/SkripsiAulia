@@ -101,7 +101,7 @@ def perform_clustering(df_normalized, n_clusters=5):
     
     return df_clustered, cluster_info
 
-def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0.13):
+def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0.1):
     import matplotlib.pyplot as plt
     import numpy as np
     from sklearn.manifold import TSNE
