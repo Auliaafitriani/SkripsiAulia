@@ -197,7 +197,7 @@ def main():
             <div style='text-align: center;'>
                 <img src="https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png" 
                      alt="Logo" 
-                     width="70" 
+                     width="100" 
                      style="margin-top: 0;">
             </div>
             """,
