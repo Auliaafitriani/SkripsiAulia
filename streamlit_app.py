@@ -191,6 +191,19 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
 def main():
     # Sidebar for navigation
     with st.sidebar:
+        # Tambahkan logo di bagian atas tanpa margin
+        st.markdown(
+            """
+            <div style='text-align: center;'>
+                <img src="https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png" 
+                     alt="Logo" 
+                     width="45" 
+                     style="margin-top: 0;">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
                            ['About', 'Upload Data', 'Preprocessing', 
@@ -218,19 +231,6 @@ def main():
                                    "color": "white"
                                },
                            })
-        
-        # Tambahkan logo tepat di bawah menu navigasi
-        st.markdown(
-            """
-            <div style='text-align: center;'>
-                <img src="https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png" 
-                     alt="Logo" 
-                     width="45" 
-                     style="margin-top: 10px;">
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
         
         # Info versi dengan styling minimal
         st.markdown("""
