@@ -191,16 +191,49 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
 def main():
     # Sidebar for navigation
     with st.sidebar:
-        selected = option_menu('PriorityAid Analytics Dashboard',
+        # Tambahkan judul utama dengan styling
+        st.markdown("""
+        <div style="background-color:#f0f2f6; padding:15px; border-radius:10px; text-align:center;">
+            <h2 style="color:#2c3e50; margin-bottom:10px;">PriorityAid</h2>
+            <p style="color:#34495e; font-size:12px;">Analytics Dashboard</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Separator
+        st.markdown("---")
+
+        # Menu navigasi dengan option_menu
+        selected = option_menu('Pilih Menu',
                            ['About', 'Upload Data', 'Preprocessing', 
                             'PSO and K-Medoids Results'],
                            menu_icon='cast',
                            icons=['house', 'cloud-upload', 'gear', 'graph-up'],
-                           default_index=0)
+                           default_index=0,
+                           styles={
+                               "container": {"padding": "0!important", "background-color": "#f0f2f6"},
+                               "icon": {"color": "#3498db", "font-size": "20px"}, 
+                               "nav-link": {
+                                   "font-size": "16px", 
+                                   "text-align": "left", 
+                                   "margin":"0px", 
+                                   "--hover-color": "#e0e0e0"
+                               },
+                               "nav-link-selected": {
+                                   "background-color": "#3498db", 
+                                   "color": "white"
+                               },
+                           })
         
-                # Add copyright at the bottom
+        # Tambahkan informasi tambahan di bawah menu
         st.markdown("---")
-        st.markdown("© 2025 Copyright by Aulia Nur Fitriani")
+        
+        # Info versi dengan styling
+        st.markdown("""
+        <div style="text-align:center; padding:10px; background-color:#f0f2f6; border-radius:10px;">
+            <small style="color:#7f8c8d;">Versi 1.0</small><br>
+            © 2025 Aulia Nur Fitriani
+        </div>
+        """, unsafe_allow_html=True)
 
     if selected == 'About':
         st.title('PriorityAid Analytics Dashboard')
