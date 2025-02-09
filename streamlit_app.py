@@ -136,129 +136,105 @@ def main():
                 st.error(f'Error saat preprocessing: {str(e)}')
 
     elif selected == 'PSO and K-Medoids Results':
-        st.title('PSO and K-Medoids Analysis')
-        
-        # Tampilkan parameter dan rumus PSO
-        st.write("### Parameter PSO yang Digunakan")
-        st.write("""
-        - w (inertia weight) = 0.7
-        - c1 (cognitive coefficient) = 1.5
-        - c2 (social coefficient) = 1.5
-        - Jumlah Partikel = 30
-        - Maksimum Iterasi = 100
-        """)
-        
-        st.write("### Rumus Update Velocity PSO")
-        st.latex(r'''
-        v_i^{t+1} = w \times v_i^t + c_1r_1(pbest_i^t - x_i^t) + c_2r_2(gbest^t - x_i^t)
-        ''')
-        st.write("""
-        Dimana:
-        - v_i^{t+1} : Kecepatan partikel i pada iterasi t+1
-        - w : Inertia weight
-        - c1 : Cognitive coefficient
-        - c2 : Social coefficient
-        - r1, r2 : Random number antara 0 dan 1
-        - pbest : Personal best position
-        - gbest : Global best position
-        - x : Current position
-        """)
-        
-        st.write("### Rumus Update Position")
-        st.latex(r'''
-        x_i^{t+1} = x_i^t + v_i^{t+1}
-        ''')
-        
-        st.write("### Fungsi Objektif")
-        st.latex(r'''
-        Cost = \sum_{i=1}^n \min_{j=1}^k d(x_i, m_j)
-        ''')
-        st.write("""
-        Dimana:
-        - n : Jumlah data points
-        - k : Jumlah cluster
-        - d(x_i, m_j) : Jarak Euclidean antara data point x_i dan medoid m_j
-        """)
+    st.title('PSO and K-Medoids Analysis')
+    
+    # Tampilkan parameter PSO
+    st.write("### Parameter PSO yang Digunakan")
+    st.write("""
+    - w (inertia weight) = 0.7
+    - c1 (cognitive coefficient) = 1.5
+    - c2 (social coefficient) = 1.5
+    - Jumlah Partikel = 30
+    - Maksimum Iterasi = 100
+    """)
 
-        if 'df_normalized' not in st.session_state:
-            st.warning('Silakan lakukan preprocessing terlebih dahulu')
-            return
+    if 'df_normalized' not in st.session_state:
+        st.warning('Silakan lakukan preprocessing terlebih dahulu')
+        return
+    
+    # Kolom untuk interaksi
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Slider untuk memilih K
+        n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=5, value=2)
+    
+    with col2:
+        # Tombol untuk analisis
+        analyze_button = st.button(f'Analisis dengan K={n_clusters}')
+    
+    # Tambahkan kolom untuk menampilkan hasil evaluasi
+    if analyze_button:
+        with st.spinner('Sedang melakukan clustering...'):
+            df_clustered, cluster_info = perform_clustering(st.session_state['df_normalized'], n_clusters)
             
-        # Tambahkan slider untuk memilih K
-        n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=6, value=2)
-        
-        # Tambahkan kolom untuk menampilkan hasil evaluasi
-        if st.button(f'Analisis dengan K={n_clusters}'):
-            with st.spinner('Sedang melakukan clustering...'):
-                df_clustered, cluster_info = perform_clustering(st.session_state['df_normalized'], n_clusters)
-                
-                # Simpan hasil untuk perbandingan
-                if 'clustering_results' not in st.session_state:
-                    st.session_state['clustering_results'] = {}
-                
-                st.session_state['clustering_results'][n_clusters] = {
-                    'silhouette': cluster_info['silhouette_score'],
-                    'distribution': cluster_info['cluster_sizes']
+            # Simpan hasil untuk perbandingan
+            if 'clustering_results' not in st.session_state:
+                st.session_state['clustering_results'] = {}
+            
+            st.session_state['clustering_results'][n_clusters] = {
+                'silhouette': cluster_info['silhouette_score'],
+                'distribution': cluster_info['cluster_sizes']
+            }
+            
+            # Tampilkan hasil clustering
+            st.write("### Hasil Clustering")
+            st.dataframe(df_clustered)
+            
+            # Tampilkan evaluasi metrics
+            st.write("### Evaluasi Clustering")
+            st.write(f"Silhouette Score untuk K={n_clusters}: {cluster_info['silhouette_score']:.4f}")
+            
+            # Tampilkan distribusi cluster
+            st.write("### Distribusi Cluster:")
+            for i, count in enumerate(cluster_info['cluster_sizes']):
+                st.write(f"Cluster {i}: {count} titik data")
+            
+            # Visualisasi distribusi
+            plt.figure(figsize=(10, 6))
+            plt.bar(range(len(cluster_info['cluster_sizes'])), cluster_info['cluster_sizes'])
+            plt.title(f'Distribusi Anggota Cluster (K={n_clusters})')
+            plt.xlabel('Cluster')
+            plt.ylabel('Jumlah Anggota')
+            st.pyplot(plt)
+            
+            # Visualisasi t-SNE
+            st.write("### Visualisasi Cluster")
+            plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
+            st.pyplot(plt_tsne)
+            
+            # Tampilkan perbandingan silhouette score
+            if len(st.session_state['clustering_results']) > 0:
+                st.write("### Perbandingan Silhouette Score")
+                comparison_data = {
+                    'K': list(st.session_state['clustering_results'].keys()),
+                    'Silhouette Score': [info['silhouette'] for info in st.session_state['clustering_results'].values()]
                 }
+                comparison_df = pd.DataFrame(comparison_data)
+                st.dataframe(comparison_df)
                 
-                # Tampilkan hasil clustering
-                st.write("### Hasil Clustering")
-                st.dataframe(df_clustered)
-                
-                # Tampilkan evaluasi metrics
-                st.write("### Evaluasi Clustering")
-                st.write(f"Silhouette Score untuk K={n_clusters}: {cluster_info['silhouette_score']:.4f}")
-                
-                # Tampilkan distribusi cluster
-                st.write("### Distribusi Cluster:")
-                for i, count in enumerate(cluster_info['cluster_sizes']):
-                    st.write(f"Cluster {i}: {count} titik data")
-                
-                # Visualisasi distribusi
+                # Visualisasi perbandingan
                 plt.figure(figsize=(10, 6))
-                plt.bar(range(len(cluster_info['cluster_sizes'])), cluster_info['cluster_sizes'])
-                plt.title(f'Distribusi Anggota Cluster (K={n_clusters})')
-                plt.xlabel('Cluster')
-                plt.ylabel('Jumlah Anggota')
+                plt.plot(comparison_df['K'], comparison_df['Silhouette Score'], marker='o')
+                plt.title('Perbandingan Silhouette Score untuk Berbagai Nilai K')
+                plt.xlabel('Jumlah Cluster (K)')
+                plt.ylabel('Silhouette Score')
+                plt.grid(True)
                 st.pyplot(plt)
-                
-                # Visualisasi t-SNE
-                st.write("### Visualisasi Cluster")
-                plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
-                st.pyplot(plt_tsne)
-                
-                # Tampilkan perbandingan silhouette score
-                if len(st.session_state['clustering_results']) > 0:
-                    st.write("### Perbandingan Silhouette Score")
-                    comparison_data = {
-                        'K': list(st.session_state['clustering_results'].keys()),
-                        'Silhouette Score': [info['silhouette'] for info in st.session_state['clustering_results'].values()]
-                    }
-                    comparison_df = pd.DataFrame(comparison_data)
-                    st.dataframe(comparison_df)
-                    
-                    # Visualisasi perbandingan
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(comparison_df['K'], comparison_df['Silhouette Score'], marker='o')
-                    plt.title('Perbandingan Silhouette Score untuk Berbagai Nilai K')
-                    plt.xlabel('Jumlah Cluster (K)')
-                    plt.ylabel('Silhouette Score')
-                    plt.grid(True)
-                    st.pyplot(plt)
-                
-                # Best medoids information
-                st.write("### Medoid Terbaik")
-                st.dataframe(cluster_info['medoid_rows'])
-                
-                # Download buttons
-                col1, col2 = st.columns(2)
-                with col1:
-                    csv = df_clustered.to_csv(index=False)
-                    st.download_button(
-                        label=f"Download Hasil K={n_clusters} (CSV)",
-                        data=csv,
-                        file_name=f'hasil_clustering_k{n_clusters}.csv',
-                        mime='text/csv'
-                    )
-        
+            
+            # Best medoids information
+            st.write("### Medoid Terbaik")
+            st.dataframe(cluster_info['medoid_rows'])
+            
+            # Download buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                csv = df_clustered.to_csv(index=False)
+                st.download_button(
+                    label=f"Download Hasil K={n_clusters} (CSV)",
+                    data=csv,
+                    file_name=f'hasil_clustering_k{n_clusters}.csv',
+                    mime='text/csv'
+                )
+
 main()
