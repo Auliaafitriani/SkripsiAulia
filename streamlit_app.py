@@ -138,16 +138,6 @@ def main():
     elif selected == 'PSO and K-Medoids Results':
         st.title('PSO and K-Medoids Analysis')
     
-        # Tampilkan parameter PSO
-        st.write("### Parameter PSO yang Digunakan")
-        st.write("""
-        - w (inertia weight) = 0.7
-        - c1 (cognitive coefficient) = 1.5
-        - c2 (social coefficient) = 1.5
-        - Jumlah Partikel = 30
-        - Maksimum Iterasi = 100
-        """)
-    
         if 'df_normalized' not in st.session_state:
             st.warning('Silakan lakukan preprocessing terlebih dahulu')
             return
@@ -216,7 +206,7 @@ def main():
                     )
 
 
-def perform_clustering(df, n_clusters):
+def perform_clustering(df, n_clusters=5):
     # Pisahkan kolom yang tidak akan di-cluster
     non_cluster_columns = ['ID', 'PEKERJAAN']
     cluster_columns = [col for col in df.columns if col not in non_cluster_columns]
@@ -228,94 +218,105 @@ def perform_clustering(df, n_clusters):
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # Inisialisasi medoids secara acak
-    medoid_indices = np.random.choice(len(X_scaled), n_clusters, replace=False)
+    # Parameter PSO
+    max_iterations = 100
+    n_particles = 30
+    w = 0.7
+    c1 = 1.5
+    c2 = 1.5
     
-    # Parameter PSO (meskipun tidak digunakan sepenuhnya, tetap disertakan untuk konsistensi)
-    w = 0.7  # inertia weight
-    c1 = 1.5  # cognitive coefficient
-    c2 = 1.5  # social coefficient
+    # Inisialisasi partikel
+    particles = [random.sample(range(len(X_scaled)), n_clusters) for _ in range(n_particles)]
+    personal_best = particles.copy()
     
     # Fungsi untuk menghitung jarak
-    def calculate_distances(X, medoids):
-        distances = np.zeros((len(X), len(medoids)))
-        for i, medoid in enumerate(medoids):
-            distances[:, i] = np.linalg.norm(X - X[medoid], axis=1)
-        return distances
+    def calculate_cost(medoids):
+        total_cost = 0
+        for point in X_scaled:
+            distances = [np.linalg.norm(point - X_scaled[medoid]) for medoid in medoids]
+            total_cost += min(distances)
+        return total_cost
     
-    # Iterasi untuk memperbaiki medoids
-    max_iterations = 100
-    best_cost = float('inf')
-    best_medoids = medoid_indices.copy()
+    # Inisialisasi biaya
+    personal_best_cost = [calculate_cost(p) for p in particles]
+    global_best = particles[np.argmin(personal_best_cost)]
+    global_best_cost = min(personal_best_cost)
     
-    for _ in range(max_iterations):
-        # Assign cluster
-        distances = calculate_distances(X_scaled, medoid_indices)
-        clusters = np.argmin(distances, axis=1)
-        
-        # Hitung biaya (total jarak ke medoid terdekat)
-        current_cost = np.sum(np.min(distances, axis=1))
-        
-        # Update best medoids jika biaya lebih baik
-        if current_cost < best_cost:
-            best_cost = current_cost
-            best_medoids = medoid_indices.copy()
-        
-        # Update medoids
-        new_medoids = medoid_indices.copy()
-        for i in range(n_clusters):
-            cluster_points = X_scaled[clusters == i]
-            if len(cluster_points) > 0:
-                # Cari titik terdekat dengan rata-rata cluster sebagai medoid baru
-                cluster_center = np.mean(cluster_points, axis=0)
-                new_medoid_idx = np.argmin(np.linalg.norm(cluster_points - cluster_center, axis=1))
-                new_medoids[i] = np.where((X_scaled == cluster_points[new_medoid_idx]).all(axis=1))[0][0]
-        
-        # Cek apakah medoids tidak berubah
-        if np.array_equal(new_medoids, medoid_indices):
-            break
-        
-        medoid_indices = new_medoids
+    # Cetak parameter PSO
+    print("\n===== OPTIMASI PSO =====")
+    print(f"Parameter PSO: Iterasi Maks: {max_iterations}, Jumlah Partikel: {n_particles}, w: {w}, c1: {c1}, c2: {c2}")
     
-    # Assign final clusters
-    distances = calculate_distances(X_scaled, best_medoids)
-    final_clusters = np.argmin(distances, axis=1)
+    # Iterasi PSO
+    velocities = [np.zeros(n_clusters) for _ in range(n_particles)]
+    
+    for iterasi in range(max_iterations):
+        print(f"\nIterasi {iterasi + 1}:")
+        for i in range(n_particles):
+            current_cost = calculate_cost(particles[i])
+            print(f"Medoids: {particles[i]} Total Biaya: {current_cost}")
+            
+            # Update personal dan global best
+            if current_cost < personal_best_cost[i]:
+                personal_best[i] = particles[i]
+                personal_best_cost[i] = current_cost
+            
+            if current_cost < global_best_cost:
+                global_best = particles[i]
+                global_best_cost = current_cost
+                print("  * Solusi terbaik baru ditemukan!")
+            
+            # Update kecepatan dan posisi
+            r1, r2 = np.random.rand(2)
+            velocities[i] = (
+                w * np.array(velocities[i]) +
+                c1 * r1 * (np.array(personal_best[i]) - np.array(particles[i])) +
+                c2 * r2 * (np.array(global_best) - np.array(particles[i]))
+            )
+            
+            particles[i] = [
+                max(0, min(len(X_scaled)-1, int(p + v)))
+                for p, v in zip(particles[i], velocities[i])
+            ]
+            particles[i] = list(set(particles[i]))
+            
+            while len(particles[i]) < n_clusters:
+                particles[i].append(random.randint(0, len(X_scaled)-1))
+    
+    # Cetak hasil optimasi
+    print("\n===== HASIL OPTIMASI PSO =====")
+    print(f"Medoid Terbaik: {global_best}")
+    print(f"Biaya Terbaik: {global_best_cost}")
+    
+    # Clustering K-Medoids
+    labels = np.zeros(len(X_scaled), dtype=int)
+    for i, point in enumerate(X_scaled):
+        distances = [np.linalg.norm(point - X_scaled[medoid]) for medoid in global_best]
+        labels[i] = np.argmin(distances)
     
     # Hitung silhouette score
-    try:
-        silhouette_avg = silhouette_score(X_scaled, final_clusters)
-    except:
-        silhouette_avg = 0
+    silhouette_avg = silhouette_score(X_scaled, labels)
+    cluster_counts = np.bincount(labels)
+    
+    # Cetak informasi clustering
+    print("\n===== CLUSTERING KMEDOIDS =====")
+    print(f"Informasi Clustering:\nJumlah Cluster: {n_clusters}\nMedoid Terpilih: {global_best}")
+    print(f"\nSilhouette Score: {silhouette_avg}")
+    print("\nDistribusi Cluster:")
+    for i, count in enumerate(cluster_counts):
+        print(f"Cluster {i}: {count} titik data")
     
     # Tambahkan kolom cluster ke dataframe
     df_clustered = df.copy()
-    df_clustered['Cluster'] = final_clusters
-    
-    # Informasi cluster
-    cluster_sizes = [np.sum(final_clusters == i) for i in range(n_clusters)]
+    df_clustered['Cluster'] = labels
     
     # Informasi cluster untuk return
     cluster_info = {
         'silhouette_score': silhouette_avg,
-        'cluster_sizes': cluster_sizes,
-        'medoid_rows': df.iloc[best_medoids],
-        'medoid_indices': best_medoids,
-        'best_cost': best_cost
+        'cluster_sizes': cluster_counts,
+        'medoid_rows': df.iloc[global_best],
+        'medoid_indices': global_best,
+        'best_cost': global_best_cost
     }
-    
-    # Tambahkan output di Streamlit
-    st.write("### Hasil Optimasi PSO")
-    st.write(f"Medoid Terbaik: {list(best_medoids)}")
-    st.write(f"Biaya Terbaik: {best_cost:.4f}")
-    
-    st.write("### Clustering K-Medoids")
-    st.write(f"Jumlah Cluster: {n_clusters}")
-    st.write(f"Medoid Terpilih: {list(best_medoids)}")
-    st.write(f"Silhouette Score: {silhouette_avg:.4f}")
-    
-    st.write("### Distribusi Cluster:")
-    for i, size in enumerate(cluster_sizes):
-        st.write(f"Cluster {i}: {size} titik data")
     
     return df_clustered, cluster_info
 
