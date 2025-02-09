@@ -191,11 +191,6 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
 def main():
     # Sidebar for navigation
     with st.sidebar:
-        # Tambahkan logo di bagian atas
-        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
-                 width=45,  # Perkecil ukuran logo
-                 use_container_width=True)
-        
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
                            ['About', 'Upload Data', 'Preprocessing', 
@@ -224,9 +219,22 @@ def main():
                                },
                            })
         
+        # Tambahkan logo tepat di bawah menu navigasi
+        st.markdown(
+            """
+            <div style='text-align: center;'>
+                <img src="https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png" 
+                     alt="Logo" 
+                     width="45" 
+                     style="margin-top: 10px;">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
         # Info versi dengan styling minimal
         st.markdown("""
-        <div style="text-align:center; padding:1; background-color:#f0f2f6; border-radius:3px; margin-top:1;">
+        <div style="text-align:center; padding:1; background-color:#f0f2f6; border-radius:3px; margin-top:10px;">
             <small style="color:#7f8c8d; font-size:15px;">Versi 1.0</small><br>
             <small style="color:#7f8c8d; font-size:15px;">© 2025 Aulia Nur Fitriani</small>
         </div>
