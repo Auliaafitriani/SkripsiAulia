@@ -364,16 +364,17 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     plt.figure(figsize=(12, 8))
 
     # Use distinct colors
-    colors = plt.cm.husl(np.linspace(0, 1, len(np.unique(labels))))
+    unique_labels = np.unique(labels)
+    colors = plt.cm.Set1(np.linspace(0, 1, len(unique_labels)))
 
     # Plot regular points and lines
     for i, color in enumerate(colors):
-        mask = labels == i
+        mask = labels == unique_labels[i]
         cluster_points = features_2d[mask]
 
         # Plot points
         plt.scatter(cluster_points[:, 0], cluster_points[:, 1],
-                   c=[color], label=f'Cluster {i}',
+                   c=[color], label=f'Cluster {unique_labels[i]}',
                    alpha=0.7, s=100)
 
         # Draw lines to medoid with reduced alpha
