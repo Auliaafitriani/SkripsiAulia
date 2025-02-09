@@ -20,6 +20,10 @@ def main():
                            menu_icon='cast',
                            icons=['house', 'cloud-upload', 'gear', 'graph-up'],
                            default_index=0)
+        
+                # Add copyright at the bottom
+        st.markdown("---")
+        st.markdown("© 2025 Copyright by Aulia Nur Fitriani")
 
     if selected == 'About':
         st.title('Government Aid Priorities Dashboard')
@@ -29,10 +33,6 @@ def main():
         Dashboard ini dirancang untuk membantu pemangku kepentingan dalam memahami data dan hasil analisis yang dilakukan. 
         Dengan menggunakan visualisasi interaktif, pengguna dapat mengeksplorasi data dan hasil pengelompokan dengan lebih baik.
         """)
-        
-        # Add copyright at the bottom
-        st.markdown("---")
-        st.markdown("© 2024 Copyright by Aulia Nur Fitriani")
 
     elif selected == 'Upload Data':
         st.title('Upload Data')
