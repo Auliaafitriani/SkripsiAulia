@@ -189,42 +189,6 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     return plt
 
 def main():
-    # Custom CSS untuk menghilangkan scrollbar dan membatasi tinggi sidebar
-    st.markdown("""
-    <style>
-    .sidebar .sidebar-content {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        overflow-y: hidden;
-        padding: 10px !important;
-    }
-    .stSidebar {
-        max-height: 100vh;
-        overflow-y: hidden;
-    }
-    .sidebar-scroll {
-        overflow-y: auto;
-        max-height: calc(100vh - 200px);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-def main():
-    # Custom CSS untuk sidebar
-    st.markdown("""
-    <style>
-    .sidebar .sidebar-content {
-        display: flex;
-        flex-direction: column;
-        padding: 5px !important;
-    }
-    .sidebar .sidebar-content > * {
-        margin-bottom: 3px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
@@ -263,8 +227,8 @@ def main():
         # Info versi dengan styling minimal
         st.markdown("""
         <div style="text-align:center; padding:3px; background-color:#f0f2f6; border-radius:3px;">
-            <small style="color:#7f8c8d; font-size:12px;">Versi 1.0</small><br>
-            <small style="color:#7f8c8d; font-size:12px;">© 2025 Aulia Nur Fitriani</small>
+            <small style="color:#7f8c8d; font-size:15px;">Versi 1.0</small><br>
+            <small style="color:#7f8c8d; font-size:15px;">© 2025 Aulia Nur Fitriani</small>
         </div>
         """, unsafe_allow_html=True)
 
