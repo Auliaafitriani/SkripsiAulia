@@ -192,7 +192,7 @@ def main():
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
-        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.jpg", 
+        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
                  width=45,  # Perkecil ukuran logo
                  use_container_width=True)
         
