@@ -224,13 +224,13 @@ def main():
                                },
                            })
         
-                # Info versi dengan styling minimal
-                st.markdown("""
-                <div style="text-align:center; padding:1; background-color:#f0f2f6; border-radius:3px; margin-top:1;">
-                    <small style="color:#7f8c8d; font-size:15px;">Versi 1.0</small><br>
-                    <small style="color:#7f8c8d; font-size:15px;">© 2025 Aulia Nur Fitriani</small>
-                </div>
-                """, unsafe_allow_html=True)
+        # Info versi dengan styling minimal
+        st.markdown("""
+        <div style="text-align:center; padding:1; background-color:#f0f2f6; border-radius:3px; margin-top:1;">
+            <small style="color:#7f8c8d; font-size:15px;">Versi 1.0</small><br>
+            <small style="color:#7f8c8d; font-size:15px;">© 2025 Aulia Nur Fitriani</small>
+        </div>
+        """, unsafe_allow_html=True)
 
     if selected == 'About':
         st.title('PriorityAid Analytics Dashboard')
