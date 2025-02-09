@@ -229,7 +229,7 @@ def main():
     with st.sidebar:
         # Tambahkan logo di bagian atas
         st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
-                 width=80,  # Perkecil ukuran logo
+                 width=60,  # Perkecil ukuran logo
                  use_container_width=True)
         
         # Menu navigasi dengan option_menu
@@ -246,10 +246,10 @@ def main():
                                },
                                "icon": {
                                    "color": "#3498db", 
-                                   "font-size": "14px"
+                                   "font-size": "17px"
                                }, 
                                "nav-link": {
-                                   "font-size": "11px", 
+                                   "font-size": "15px", 
                                    "text-align": "left", 
                                    "margin":"1px", 
                                    "--hover-color": "#e0e0e0"
