@@ -89,6 +89,12 @@ def main():
         if st.button('Lakukan Preprocessing'):
             try:
                 df = st.session_state['original_data']
+
+                # Statistik Deskriptif
+                st.write("### Statistik Deskriptif")
+                # Pilih kolom numerik untuk statistik deskriptif
+                numeric_columns = df.select_dtypes(include=[np.float64, np.int64]).columns
+                st.dataframe(df[numeric_columns].describe())
                 
                 # Check Missing Values
                 st.write("### Pengecekan Missing Values")
