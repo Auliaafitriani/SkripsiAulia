@@ -192,7 +192,9 @@ def main():
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
-        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", width=100, use_column_width="always")
+        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
+                 width=150,  # Atur lebar secara spesifik
+                 use_container_width=True)  # Gunakan container width
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
