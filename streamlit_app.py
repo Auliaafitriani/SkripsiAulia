@@ -206,77 +206,77 @@ def main():
                     )
 
 
-elif selected == 'PSO and K-Medoids Results':
-    st.title('PSO and K-Medoids Analysis')
-
-    if 'df_normalized' not in st.session_state:
-        st.warning('Silakan lakukan preprocessing terlebih dahulu')
-        return
+    elif selected == 'PSO and K-Medoids Results':
+        st.title('PSO and K-Medoids Analysis')
     
-    # Kolom untuk interaksi
-    col1, col2 = st.columns(2)
+        if 'df_normalized' not in st.session_state:
+            st.warning('Silakan lakukan preprocessing terlebih dahulu')
+            return
+        
+        # Kolom untuk interaksi
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Slider untuk memilih K
+            n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=6, value=5)
+        
+        with col2:
+            # Tombol untuk analisis
+            analyze_button = st.button(f'Analisis dengan K={n_clusters}')
+        
+        # Tambahkan kolom untuk menampilkan hasil evaluasi
+        if analyze_button:
+            with st.spinner('Sedang melakukan clustering...'):
+                # Persiapkan data untuk clustering
+                data = st.session_state['df_normalized'].drop(columns=['ID', 'PEKERJAAN']).values
+                
+                # Gunakan kelas PSOKMedoids untuk clustering
+                pso = PSOKMedoids(data, n_clusters=n_clusters)
+                optimal_medoids, silhouette, labels, distribution = pso.optimize()
     
-    with col1:
-        # Slider untuk memilih K
-        n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=6, value=5)
+                # Tambahkan kolom cluster ke dataframe
+                df_clustered = st.session_state['df_normalized'].copy()
+                df_clustered['Cluster'] = labels
+                
+                # Simpan hasil clustering
+                cluster_info = {
+                    'medoids': optimal_medoids, 
+                    'silhouette_score': silhouette, 
+                    'cluster_sizes': distribution
+                }
+                
+                # Tampilkan informasi cluster
+                st.write("### Informasi Cluster")
+                st.write(f"Silhouette Score: {silhouette:.4f}")
     
-    with col2:
-        # Tombol untuk analisis
-        analyze_button = st.button(f'Analisis dengan K={n_clusters}')
+                # Distribusi cluster dengan format yang diinginkan
+                st.write("### Distribusi Cluster:")
+                cluster_distribution = ""
+                for i, count in enumerate(distribution):
+                    cluster_distribution += f"Cluster {i}: {count} titik data\n"
+                st.text(cluster_distribution)
     
-    # Tambahkan kolom untuk menampilkan hasil evaluasi
-    if analyze_button:
-        with st.spinner('Sedang melakukan clustering...'):
-            # Persiapkan data untuk clustering
-            data = st.session_state['df_normalized'].drop(columns=['ID', 'PEKERJAAN']).values
-            
-            # Gunakan kelas PSOKMedoids untuk clustering
-            pso = PSOKMedoids(data, n_clusters=n_clusters)
-            optimal_medoids, silhouette, labels, distribution = pso.optimize()
-
-            # Tambahkan kolom cluster ke dataframe
-            df_clustered = st.session_state['df_normalized'].copy()
-            df_clustered['Cluster'] = labels
-            
-            # Simpan hasil clustering
-            cluster_info = {
-                'medoids': optimal_medoids, 
-                'silhouette_score': silhouette, 
-                'cluster_sizes': distribution
-            }
-            
-            # Tampilkan informasi cluster
-            st.write("### Informasi Cluster")
-            st.write(f"Silhouette Score: {silhouette:.4f}")
-
-            # Distribusi cluster dengan format yang diinginkan
-            st.write("### Distribusi Cluster:")
-            cluster_distribution = ""
-            for i, count in enumerate(distribution):
-                cluster_distribution += f"Cluster {i}: {count} titik data\n"
-            st.text(cluster_distribution)
-
-            # Visualisasi distribusi cluster
-            plt.figure(figsize=(10, 6))
-            plt.bar(range(len(distribution)), distribution)
-            plt.title('Distribusi Anggota Cluster')
-            plt.xlabel('Cluster')
-            plt.ylabel('Jumlah Anggota')
-            st.pyplot(plt)
-
-            # Visualisasi Cluster dengan t-SNE
-            st.write("### Visualisasi Cluster")
-            plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
-            st.pyplot(plt_tsne)
-
-            # Tombol untuk download hasil clustering
-            csv = df_clustered.to_csv(index=False)
-            st.download_button(
-                label="Download Hasil Clustering (CSV)", 
-                data=csv, 
-                file_name='hasil_clustering.csv', 
-                mime='text/csv'
-            )
-
+                # Visualisasi distribusi cluster
+                plt.figure(figsize=(10, 6))
+                plt.bar(range(len(distribution)), distribution)
+                plt.title('Distribusi Anggota Cluster')
+                plt.xlabel('Cluster')
+                plt.ylabel('Jumlah Anggota')
+                st.pyplot(plt)
+    
+                # Visualisasi Cluster dengan t-SNE
+                st.write("### Visualisasi Cluster")
+                plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
+                st.pyplot(plt_tsne)
+    
+                # Tombol untuk download hasil clustering
+                csv = df_clustered.to_csv(index=False)
+                st.download_button(
+                    label="Download Hasil Clustering (CSV)", 
+                    data=csv, 
+                    file_name='hasil_clustering.csv', 
+                    mime='text/csv'
+                )
+    
 main()
     
