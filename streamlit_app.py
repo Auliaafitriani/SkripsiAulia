@@ -192,8 +192,7 @@ def main():
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
-        # Anda bisa mengganti URL dengan path logo lokal atau URL logo Anda
-        st.image("https://img.icons8.com/fluency/96/government-building.png", width=100, use_column_width="always")
+        st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", width=100, use_column_width="always")
 
         # Judul utama dengan styling minimal
         st.markdown("<h2 style='text-align: center; color: #2c3e50; margin-bottom: 20px;'>PriorityAid Analytics Dashboard</h2>", unsafe_allow_html=True)
