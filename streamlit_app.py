@@ -210,15 +210,27 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
+def main():
+    # Custom CSS untuk sidebar
+    st.markdown("""
+    <style>
+    .sidebar .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        padding: 5px !important;
+    }
+    .sidebar .sidebar-content > * {
+        margin-bottom: 3px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
         st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
-                 width=100,  # Perkecil ukuran logo
+                 width=80,  # Perkecil ukuran logo
                  use_container_width=True)
-        
-        # Gunakan div untuk membatasi scrolling
-        st.markdown('<div class="sidebar-scroll">', unsafe_allow_html=True)
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -229,15 +241,15 @@ def main():
                            default_index=0,
                            styles={
                                "container": {
-                                   "padding": "3px", 
+                                   "padding": "2px", 
                                    "background-color": "#f0f2f6"
                                },
                                "icon": {
                                    "color": "#3498db", 
-                                   "font-size": "16px"
+                                   "font-size": "14px"
                                }, 
                                "nav-link": {
-                                   "font-size": "12px", 
+                                   "font-size": "11px", 
                                    "text-align": "left", 
                                    "margin":"1px", 
                                    "--hover-color": "#e0e0e0"
@@ -248,12 +260,9 @@ def main():
                                },
                            })
         
-        # Tutup div sidebar-scroll
-        st.markdown('</div>', unsafe_allow_html=True)
-        
         # Info versi dengan styling minimal
         st.markdown("""
-        <div style="text-align:center; padding:5px; background-color:#f0f2f6; border-radius:5px;">
+        <div style="text-align:center; padding:3px; background-color:#f0f2f6; border-radius:3px;">
             <small style="color:#7f8c8d; font-size:12px;">Versi 1.0</small><br>
             <small style="color:#7f8c8d; font-size:12px;">© 2025 Aulia Nur Fitriani</small>
         </div>
