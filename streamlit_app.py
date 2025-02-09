@@ -193,10 +193,7 @@ def main():
     with st.sidebar:
         # Tambahkan logo di bagian atas
         st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", width=100, use_column_width="always")
-
-        # Judul utama dengan styling minimal
-        st.markdown("<h2 style='text-align: center; color: #2c3e50; margin-bottom: 20px;'>PriorityAid Analytics Dashboard</h2>", unsafe_allow_html=True)
-
+        
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
                            ['About', 'Upload Data', 'Preprocessing', 
