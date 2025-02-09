@@ -206,202 +206,77 @@ def main():
                     )
 
 
-def perform_clustering(df, n_clusters):
-    # Pisahkan kolom yang tidak akan di-cluster
-    non_cluster_columns = ['ID', 'PEKERJAAN']
-    cluster_columns = [col for col in df.columns if col not in non_cluster_columns]
+elif selected == 'PSO and K-Medoids Results':
+    st.title('PSO and K-Medoids Analysis')
+
+    if 'df_normalized' not in st.session_state:
+        st.warning('Silakan lakukan preprocessing terlebih dahulu')
+        return
     
-    # Persiapkan data untuk clustering
-    X = df[cluster_columns].values
+    # Kolom untuk interaksi
+    col1, col2 = st.columns(2)
     
-    # Standarisasi data
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    with col1:
+        # Slider untuk memilih K
+        n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=6, value=5)
     
-    # Simulasi hasil clustering untuk K=5
-    if n_clusters == 5:
-        # Hardcode hasil dari Google Colab
-        best_medoids = [0, 609, 1011, 578, 195]
-        best_cost = 268.1676231473807
-        silhouette_avg = 0.6530938952575164
-        cluster_sizes = [179, 89, 296, 354, 94]
-        
-        # Cetak output
-        print("""
-===== HASIL OPTIMASI PSO =====
-Medoid Terbaik: [0, 609, 1011, 578, 195]
-Biaya Terbaik: 268.1676231473807
-===== CLUSTERING KMEDOIDS =====
-Informasi Clustering:
-Jumlah Cluster: 5
-Medoid Terpilih: [0, 609, 1011, 578, 195]
-Silhouette Score: 0.6530938952575164
-Distribusi Cluster:
-Cluster 0: 179 titik data
-Cluster 1: 89 titik data
-Cluster 2: 296 titik data
-Cluster 3: 354 titik data
-Cluster 4: 94 titik data
-""")
-        
-        # Assign clusters
-        labels = np.zeros(len(X_scaled), dtype=int)
-        for i, point in enumerate(X_scaled):
-            distances = [np.linalg.norm(point - X_scaled[medoid]) for medoid in best_medoids]
-            labels[i] = np.argmin(distances)
-    else:
-        # Implementasi K-Medoids untuk jumlah cluster lain
-        def euclidean_distance(point1, point2):
-            return np.sqrt(np.sum((point1 - point2) ** 2))
-        
-        # Inisialisasi medoids secara acak
-        medoid_indices = np.random.choice(len(X_scaled), n_clusters, replace=False)
-        
-        # Iterasi untuk memperbaiki medoids
-        max_iterations = 100
-        for _ in range(max_iterations):
-            # Assign cluster
-            clusters = [[] for _ in range(n_clusters)]
-            for i, point in enumerate(X_scaled):
-                distances = [euclidean_distance(point, X_scaled[medoid]) for medoid in medoid_indices]
-                cluster_idx = np.argmin(distances)
-                clusters[cluster_idx].append(i)
+    with col2:
+        # Tombol untuk analisis
+        analyze_button = st.button(f'Analisis dengan K={n_clusters}')
+    
+    # Tambahkan kolom untuk menampilkan hasil evaluasi
+    if analyze_button:
+        with st.spinner('Sedang melakukan clustering...'):
+            # Persiapkan data untuk clustering
+            data = st.session_state['df_normalized'].drop(columns=['ID', 'PEKERJAAN']).values
             
-            # Update medoids
-            new_medoids = medoid_indices.copy()
-            for i in range(n_clusters):
-                if not clusters[i]:
-                    continue
-                # Pilih medoid baru yang meminimalkan total jarak dalam cluster
-                cluster_points = X_scaled[clusters[i]]
-                new_medoid_idx = clusters[i][np.argmin(
-                    [np.sum([euclidean_distance(point, other) for other in cluster_points]) 
-                     for point in cluster_points]
-                )]
-                new_medoids[i] = new_medoid_idx
+            # Gunakan kelas PSOKMedoids untuk clustering
+            pso = PSOKMedoids(data, n_clusters=n_clusters)
+            optimal_medoids, silhouette, labels, distribution = pso.optimize()
+
+            # Tambahkan kolom cluster ke dataframe
+            df_clustered = st.session_state['df_normalized'].copy()
+            df_clustered['Cluster'] = labels
             
-            # Cek konvergensi
-            if np.array_equal(new_medoids, medoid_indices):
-                break
+            # Simpan hasil clustering
+            cluster_info = {
+                'medoids': optimal_medoids, 
+                'silhouette_score': silhouette, 
+                'cluster_sizes': distribution
+            }
             
-            medoid_indices = new_medoids
-        
-        # Assign final clusters
-        labels = np.zeros(len(X_scaled), dtype=int)
-        for i, point in enumerate(X_scaled):
-            distances = [euclidean_distance(point, X_scaled[medoid]) for medoid in medoid_indices]
-            labels[i] = np.argmin(distances)
-        
-        # Hitung silhouette score
-        silhouette_avg = silhouette_score(X_scaled, labels)
-        
-        # Hitung distribusi cluster
-        cluster_sizes = np.bincount(labels)
-        
-        # Cetak informasi clustering
-        print(f"\n===== CLUSTERING KMEDOIDS =====")
-        print(f"Informasi Clustering:\nJumlah Cluster: {n_clusters}\nMedoid Terpilih: {list(medoid_indices)}")
-        print(f"\nSilhouette Score: {silhouette_avg}")
-        print("\nDistribusi Cluster:")
-        for i, count in enumerate(cluster_sizes):
-            print(f"Cluster {i}: {count} titik data")
-        
-        best_cost = np.sum([np.min([euclidean_distance(point, X_scaled[medoid]) for medoid in medoid_indices]) 
-                             for point in X_scaled])
-    
-    # Tambahkan kolom cluster ke dataframe
-    df_clustered = df.copy()
-    df_clustered['Cluster'] = labels
-    
-    # Informasi cluster untuk return
-    try:
-        medoid_rows = df.iloc[medoid_indices] if isinstance(medoid_indices, (list, np.ndarray)) else None
-    except:
-        medoid_rows = None
-    
-    cluster_info = {
-        'silhouette_score': silhouette_avg,
-        'cluster_sizes': cluster_sizes,
-        'medoids': medoid_indices,  # Gunakan 'medoids' sebagai ganti 'medoid_rows'
-        'medoid_indices': medoid_indices,
-        'best_cost': best_cost
-    }
-    
-    return df_clustered, cluster_info
+            # Tampilkan informasi cluster
+            st.write("### Informasi Cluster")
+            st.write(f"Silhouette Score: {silhouette:.4f}")
 
-def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0.13):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from sklearn.manifold import TSNE
+            # Distribusi cluster dengan format yang diinginkan
+            st.write("### Distribusi Cluster:")
+            cluster_distribution = ""
+            for i, count in enumerate(distribution):
+                cluster_distribution += f"Cluster {i}: {count} titik data\n"
+            st.text(cluster_distribution)
 
-    # Extract features and labels
-    features = df_clustered.drop(columns=['ID', 'PEKERJAAN', 'Cluster']).values
-    labels = df_clustered['Cluster'].values
+            # Visualisasi distribusi cluster
+            plt.figure(figsize=(10, 6))
+            plt.bar(range(len(distribution)), distribution)
+            plt.title('Distribusi Anggota Cluster')
+            plt.xlabel('Cluster')
+            plt.ylabel('Jumlah Anggota')
+            st.pyplot(plt)
 
-    # Get medoids
-    medoids = cluster_info.get('medoids', cluster_info.get('medoid_indices', []))
-    medoid_features = features[medoids]
+            # Visualisasi Cluster dengan t-SNE
+            st.write("### Visualisasi Cluster")
+            plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
+            st.pyplot(plt_tsne)
 
-    # Apply t-SNE with adjusted perplexity for medoids
-    tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, len(features) - 1))  # Adjust perplexity for features
-    features_2d = tsne.fit_transform(features)
-
-    # Use a smaller perplexity for medoids (should be less than the number of medoids)
-    tsne_medoids = TSNE(n_components=2, random_state=42, perplexity=min(30, len(medoid_features) - 1))  # Adjust perplexity for medoids
-    medoid_2d = tsne_medoids.fit_transform(medoid_features)
-
-    # Compress distances to medoids
-    for i in range(len(np.unique(labels))):
-        mask = labels == i
-        cluster_points = features_2d[mask]
-
-        # Calculate vectors from medoid to points
-        vectors = cluster_points - medoid_2d[i]
-
-        # Compress these vectors
-        compressed_vectors = vectors * compression_factor
-
-        # Apply compressed positions
-        features_2d[mask] = medoid_2d[i] + compressed_vectors
-
-    # Plot
-    plt.figure(figsize=(12, 8))
-
-    # Use distinct colors
-    unique_labels = np.unique(labels)
-    colors = plt.cm.Set1(np.linspace(0, 1, len(unique_labels)))
-
-    # Plot regular points and lines
-    for i, color in enumerate(colors):
-        mask = labels == unique_labels[i]
-        cluster_points = features_2d[mask]
-
-        # Plot points
-        plt.scatter(cluster_points[:, 0], cluster_points[:, 1],
-                   c=[color], label=f'Cluster {unique_labels[i]}',
-                   alpha=0.7, s=100)
-
-        # Draw lines to medoid with reduced alpha
-        for point in cluster_points:
-            plt.plot([medoid_2d[i, 0], point[0]],
-                    [medoid_2d[i, 1], point[1]],
-                    c=color, alpha=0.2, linewidth=0.5)
-
-    # Plot medoids
-    plt.scatter(medoid_2d[:, 0], medoid_2d[:, 1],
-               c='red', marker='*', s=800,
-               label='Medoids', edgecolor='black', linewidth=2)
-
-    plt.title('K-Medoids Clustering Visualization', fontsize=14, pad=20)
-    plt.xlabel('t-SNE Component 1', fontsize=12)
-    plt.ylabel('t-SNE Component 2', fontsize=12)
-
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left',
-              borderaxespad=0., fontsize=10)
-
-    plt.tight_layout()
-    
-    return plt
+            # Tombol untuk download hasil clustering
+            csv = df_clustered.to_csv(index=False)
+            st.download_button(
+                label="Download Hasil Clustering (CSV)", 
+                data=csv, 
+                file_name='hasil_clustering.csv', 
+                mime='text/csv'
+            )
 
 main()
     
