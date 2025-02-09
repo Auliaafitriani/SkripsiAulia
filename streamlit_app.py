@@ -314,10 +314,15 @@ Cluster 4: 94 titik data
     df_clustered['Cluster'] = labels
     
     # Informasi cluster untuk return
+    try:
+        medoid_rows = df.iloc[medoid_indices] if isinstance(medoid_indices, (list, np.ndarray)) else None
+    except:
+        medoid_rows = None
+    
     cluster_info = {
         'silhouette_score': silhouette_avg,
         'cluster_sizes': cluster_sizes,
-        'medoid_rows': df.iloc[list(medoid_indices)],  # Ubah ke list
+        'medoids': medoid_indices,  # Gunakan 'medoids' sebagai ganti 'medoid_rows'
         'medoid_indices': medoid_indices,
         'best_cost': best_cost
     }
@@ -328,14 +333,13 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     import matplotlib.pyplot as plt
     import numpy as np
     from sklearn.manifold import TSNE
-    import seaborn as sns
 
     # Extract features and labels
     features = df_clustered.drop(columns=['ID', 'PEKERJAAN', 'Cluster']).values
     labels = df_clustered['Cluster'].values
 
     # Get medoids
-    medoids = cluster_info['medoid_indices']
+    medoids = cluster_info.get('medoids', cluster_info.get('medoid_indices', []))
     medoid_features = features[medoids]
 
     # Apply t-SNE with adjusted perplexity for medoids
