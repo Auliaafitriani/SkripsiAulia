@@ -324,7 +324,7 @@ def main():
         
         with col1:
             # Slider untuk memilih K
-            n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=6, value=5)
+            n_clusters = st.slider('Jumlah Cluster (K)', min_value=2, max_value=5, value=5)
         
         with col2:
             # Tombol untuk analisis
@@ -370,6 +370,12 @@ def main():
                 # Best medoids information
                 st.write("### Medoid Terbaik")
                 st.dataframe(cluster_info['medoid_rows'])
+
+                st.write("### Distribusi Cluster:")
+                cluster_distribution = "Distribusi Cluster: \n"
+                for i, count in enumerate(cluster_info['cluster_sizes']):
+                    cluster_distribution += f"Cluster {i}: {count} titik data\n"
+                st.text(cluster_distribution)
                 
                 # Download buttons
                 col1, col2 = st.columns(2)
