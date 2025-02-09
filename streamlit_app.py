@@ -191,31 +191,27 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
 def main():
     # Sidebar for navigation
     with st.sidebar:
-        # Tambahkan judul utama dengan styling
-        st.markdown("""
-        <div style="background-color:#f0f2f6; padding:15px; border-radius:10px; text-align:center;">
-            <h2 style="color:#2c3e50; margin-bottom:20px;">PriorityAid</h2>
-            <p style="color:#34495e; font-size:19px;">Analytics Dashboard</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Tambahkan logo di bagian atas
+        # Anda bisa mengganti URL dengan path logo lokal atau URL logo Anda
+        st.image("https://img.icons8.com/fluency/96/government-building.png", width=100, use_column_width="always")
 
-        # Separator
-        st.markdown("---")
+        # Judul utama dengan styling minimal
+        st.markdown("<h2 style='text-align: center; color: #2c3e50; margin-bottom: 20px;'>PriorityAid</h2>", unsafe_allow_html=True)
 
         # Menu navigasi dengan option_menu
-        selected = option_menu('Pilih Menu',
+        selected = option_menu(None,  # Hapus judul menu
                            ['About', 'Upload Data', 'Preprocessing', 
                             'PSO and K-Medoids Results'],
                            menu_icon='cast',
                            icons=['house', 'cloud-upload', 'gear', 'graph-up'],
                            default_index=0,
                            styles={
-                               "container": {"padding": "0!important", "background-color": "#f0f2f6"},
-                               "icon": {"color": "#3498db", "font-size": "20px"}, 
+                               "container": {"padding": "5px", "background-color": "#f0f2f6"},
+                               "icon": {"color": "#3498db", "font-size": "18px"}, 
                                "nav-link": {
-                                   "font-size": "16px", 
+                                   "font-size": "14px", 
                                    "text-align": "left", 
-                                   "margin":"0px", 
+                                   "margin":"2px", 
                                    "--hover-color": "#e0e0e0"
                                },
                                "nav-link-selected": {
@@ -224,8 +220,8 @@ def main():
                                },
                            })
         
-        # Tambahkan informasi tambahan di bawah menu
-        st.markdown("---")
+        # Copyright dengan styling minimal
+        st.markdown("<div style='text-align:center; font-size:12px; color:#7f8c8d; margin-top:10px;'>© 2025 Aulia Nur Fitriani</div>", unsafe_allow_html=True)
         
         # Info versi dengan styling
         st.markdown("""
