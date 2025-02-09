@@ -189,12 +189,26 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     return plt
 
 def main():
+    # Custom CSS untuk mengurangi scrolling
+    st.markdown("""
+    <style>
+    .sidebar .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        padding: 5px !important;
+    }
+    .sidebar .sidebar-content > * {
+        margin-bottom: 5px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Sidebar for navigation
     with st.sidebar:
         # Tambahkan logo di bagian atas
         st.image("https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png", 
-                 width=150,  # Atur lebar secara spesifik
-                 use_container_width=True)  # Gunakan container width
+                 width=100,  # Perkecil ukuran logo
+                 use_container_width=True)
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -204,12 +218,18 @@ def main():
                            icons=['house', 'cloud-upload', 'gear', 'graph-up'],
                            default_index=0,
                            styles={
-                               "container": {"padding": "5px", "background-color": "#f0f2f6"},
-                               "icon": {"color": "#3498db", "font-size": "18px"}, 
+                               "container": {
+                                   "padding": "3px", 
+                                   "background-color": "#f0f2f6"
+                               },
+                               "icon": {
+                                   "color": "#3498db", 
+                                   "font-size": "16px"
+                               }, 
                                "nav-link": {
-                                   "font-size": "14px", 
+                                   "font-size": "12px", 
                                    "text-align": "left", 
-                                   "margin":"2px", 
+                                   "margin":"1px", 
                                    "--hover-color": "#e0e0e0"
                                },
                                "nav-link-selected": {
@@ -218,11 +238,11 @@ def main():
                                },
                            })
         
-        # Info versi dengan styling
+        # Info versi dengan styling minimal
         st.markdown("""
-        <div style="text-align:center; padding:10px; background-color:#f0f2f6; border-radius:10px;">
-            <small style="color:#7f8c8d;">Versi 1.0</small><br>
-            © 2025 Aulia Nur Fitriani
+        <div style="text-align:center; padding:5px; background-color:#f0f2f6; border-radius:5px;">
+            <small style="color:#7f8c8d; font-size:10px;">Versi 1.0</small><br>
+            <small style="color:#7f8c8d; font-size:10px;">© 2025 Aulia Nur Fitriani</small>
         </div>
         """, unsafe_allow_html=True)
 
