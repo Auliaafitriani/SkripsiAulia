@@ -236,5 +236,54 @@ def main():
                             file_name=f'hasil_clustering_k{n_clusters}.csv',
                             mime='text/csv'
                         )
-
+def visualize_kmedoids_clusters(df_clustered, cluster_info):
+    # Ekstrak data untuk visualisasi
+    cluster_columns = [col for col in df_clustered.columns if col not in ['ID', 'PEKERJAAN', 'Cluster']]
+    X = df_clustered[cluster_columns].values
+    
+    # Reduksi dimensi menggunakan t-SNE
+    tsne = TSNE(n_components=2, random_state=42)
+    X_tsne = tsne.fit_transform(X)
+    
+    # Plot
+    plt.figure(figsize=(12, 10))
+    
+    # Warna untuk cluster
+    colors = ['red', 'green', 'blue', 'purple', 'orange', 'brown']
+    
+    # Plot titik-titik cluster
+    for i in range(len(np.unique(df_clustered['Cluster']))):
+        mask = df_clustered['Cluster'] == i
+        plt.scatter(X_tsne[mask, 0], X_tsne[mask, 1], 
+                    c=colors[i], 
+                    label=f'Cluster {i}', 
+                    alpha=0.7)
+    
+    # Plot medoids
+    medoid_indices = cluster_info['medoid_indices']
+    plt.scatter(X_tsne[medoid_indices, 0], X_tsne[medoid_indices, 1], 
+                c='black', 
+                marker='*', 
+                s=300, 
+                label='Medoids')
+    
+    # Tambahkan garis dari setiap titik ke medoidnya
+    for i, medoid_idx in enumerate(medoid_indices):
+        cluster_mask = df_clustered['Cluster'] == i
+        plt.plot(
+            np.column_stack([X_tsne[cluster_mask, 0], np.repeat(X_tsne[medoid_idx, 0], sum(cluster_mask))]),
+            np.column_stack([X_tsne[cluster_mask, 1], np.repeat(X_tsne[medoid_idx, 1], sum(cluster_mask))]),
+            c='gray', 
+            alpha=0.3, 
+            linewidth=0.5
+        )
+    
+    plt.title('K-Medoids Clustering Visualization', fontsize=16)
+    plt.xlabel('t-SNE Component 1', fontsize=12)
+    plt.ylabel('t-SNE Component 2', fontsize=12)
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    return plt
+    
 main()
