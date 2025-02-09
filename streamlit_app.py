@@ -50,17 +50,20 @@ def main():
     elif selected == 'Preprocessing':
         st.title('Data Preprocessing')
         
-        if 'original_data' not in st.session_state:
+        if st.session_state['original_data'] is None:
             st.warning('Silakan upload data terlebih dahulu pada halaman Upload Data')
             return
             
         if st.button('Lakukan Preprocessing'):
-            df_normalized = weighted_normalize(st.session_state['original_data'])
-            st.session_state['df_normalized'] = df_normalized
-            
-            st.write("### Data Setelah Preprocessing")
-            st.dataframe(df_normalized)
-            st.success('Preprocessing selesai!')
+            try:
+                df_normalized = weighted_normalize(st.session_state['original_data'])
+                st.session_state['df_normalized'] = df_normalized
+                
+                st.write("### Data Setelah Preprocessing")
+                st.dataframe(df_normalized)
+                st.success('Preprocessing selesai!')
+            except Exception as e:
+                st.error(f'Error saat preprocessing: {str(e)}')
 
     elif selected == 'PSO and K-Medoids Results':
         st.title('PSO and K-Medoids Analysis')
