@@ -85,53 +85,46 @@ def main():
         if 'original_data' not in st.session_state or st.session_state['original_data'] is None:
             st.warning('Silakan upload data terlebih dahulu pada halaman Upload Data')
             return
-        
-        # Display original data
-        st.write("### Data Asli")
-        st.dataframe(st.session_state['original_data'])
-        
-        # Check Missing Values
-        st.write("### Pengecekan Missing Values")
-        missing_values = st.session_state['original_data'].isnull().sum()
-        missing_df = pd.DataFrame({
-            'Kolom': missing_values.index,
-            'Jumlah Missing Values': missing_values.values
-        })
-        st.dataframe(missing_df)
-        
-        # Check Outliers
-        st.write("### Pengecekan Outliers")
-        df = st.session_state['original_data']
-        
-        # Pilih kolom numerik untuk analisis outlier
-        selected_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
-        
-        # Hitung Q1, Q3, dan IQR
-        Q1 = df[selected_columns].quantile(0.25)
-        Q3 = df[selected_columns].quantile(0.75)
-        IQR = Q3 - Q1
-        lower_bound = Q1 - 1.5 * IQR
-        upper_bound = Q3 + 1.5 * IQR
-        
-        # Hitung jumlah outlier
-        outliers = ((df[selected_columns] < lower_bound) | (df[selected_columns] > upper_bound)).sum()
-        outlier_df = pd.DataFrame({
-            'Kolom': outliers.index,
-            'Jumlah Outlier': outliers.values
-        })
-        st.dataframe(outlier_df)
-        
-        # Tampilkan statistik deskriptif
-        st.write("### Statistik Deskriptif")
-        st.dataframe(df[selected_columns].describe())
             
         if st.button('Lakukan Preprocessing'):
             try:
-                df_normalized = weighted_normalize(st.session_state['original_data'])
-                st.session_state['df_normalized'] = df_normalized
+                df = st.session_state['original_data']
                 
-                st.write("### Data Setelah Preprocessing")
+                # Check Missing Values
+                st.write("### Pengecekan Missing Values")
+                missing_values = df.isnull().sum()
+                missing_df = pd.DataFrame({
+                    'Kolom': missing_values.index,
+                    'Jumlah Missing Values': missing_values.values
+                })
+                st.dataframe(missing_df)
+                
+                # Check Outliers
+                st.write("### Pengecekan Outliers")
+                # Pilih kolom numerik untuk analisis outlier
+                selected_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
+                
+                # Hitung Q1, Q3, dan IQR
+                Q1 = df[selected_columns].quantile(0.25)
+                Q3 = df[selected_columns].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+                
+                # Hitung jumlah outlier
+                outliers = ((df[selected_columns] < lower_bound) | (df[selected_columns] > upper_bound)).sum()
+                outlier_df = pd.DataFrame({
+                    'Kolom': outliers.index,
+                    'Jumlah Outlier': outliers.values
+                })
+                st.dataframe(outlier_df)
+                
+                # Lakukan normalisasi
+                st.write("### Data Setelah Normalisasi dan Pembobotan")
+                df_normalized = weighted_normalize(df)
+                st.session_state['df_normalized'] = df_normalized
                 st.dataframe(df_normalized)
+                
                 st.success('Preprocessing selesai!')
             except Exception as e:
                 st.error(f'Error saat preprocessing: {str(e)}')
