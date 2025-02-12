@@ -207,6 +207,47 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     
     return plt
 
+def search_by_id(df_original, df_normalized, cluster_results):
+    st.write("### Pencarian Detail Data")
+    
+    # Input ID
+    search_id = st.text_input('Masukkan ID untuk dicari')
+    
+    # Pilih K
+    available_k = list(cluster_results.keys())
+    selected_k = st.selectbox('Pilih Jumlah Cluster (K)', available_k)
+    
+    if st.button('Cari'):
+        try:
+            # Pastikan search_id adalah integer
+            search_id_int = int(search_id)
+            
+            # Cari data asli berdasarkan ID
+            original_data = df_original[df_original['ID'] == search_id_int]
+            
+            # Cari cluster untuk ID ini di hasil clustering untuk K yang dipilih
+            cluster_df = cluster_results[selected_k]['df_clustered']
+            cluster = cluster_df[cluster_df['ID'] == search_id_int]['Cluster'].values
+            
+            if not original_data.empty:
+                st.write("### Detail Data Asli:")
+                st.dataframe(original_data)
+                
+                if len(cluster) > 0:
+                    st.write(f"### Cluster: {cluster[0]}")
+                    
+                    # Tampilkan detail cluster
+                    st.write("### Informasi Cluster:")
+                    cluster_details = cluster_df[cluster_df['Cluster'] == cluster[0]]
+                    st.write(f"Jumlah anggota Cluster {cluster[0]}: {len(cluster_details)}")
+                else:
+                    st.warning("ID tidak ditemukan dalam cluster yang dipilih.")
+            else:
+                st.warning("ID tidak ditemukan.")
+        
+        except ValueError:
+            st.error("Harap masukkan ID yang valid (angka).")
+
 def main():
     # Sidebar for navigation
     with st.sidebar:
@@ -222,20 +263,6 @@ def main():
             """,
             unsafe_allow_html=True
         )
-
-        # Add Terms & Conditions section
-        with st.expander("Terms & Conditions"):
-            st.markdown("""
-            **Allowed Columns:**
-            - ID
-            - PEKERJAAN
-            - JUMLAH ASET MOBIL
-            - JUMLAH ASET MOTOR
-            - JUMLAH ASET RUMAH/TANAH/SAWAH
-            - PENDAPATAN
-            
-            The uploaded data must contain only the specified columns.
-            """)
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -280,6 +307,20 @@ def main():
             Proyek ini mengoptimalkan metode K-Medoids dengan Particle Swarm Optimization (PSO) untuk meningkatkan efisiensi dan akurasi dalam pengelompokan penerima bantuan, memastikan distribusi yang lebih adil dan tepat sasaran. 
             Dengan visualisasi interaktif, pemangku kepentingan dapat dengan mudah memahami pola distribusi, mengevaluasi hasil analisis, serta mengidentifikasi tren penerima bantuan secara lebih transparan dan berbasis data, sehingga proses pengambilan keputusan menjadi lebih efektif.
         """)
+      
+      # Add Terms & Conditions section
+        with st.expander("Terms & Conditions"):
+            st.markdown("""
+            **Allowed Columns:**
+            - ID
+            - PEKERJAAN
+            - JUMLAH ASET MOBIL
+            - JUMLAH ASET MOTOR
+            - JUMLAH ASET RUMAH/TANAH/SAWAH
+            - PENDAPATAN
+            
+            The uploaded data must contain only the specified columns.
+            """)
 
     elif selected == 'Upload Data':
         st.title('Upload Data')
@@ -359,7 +400,7 @@ def main():
             st.warning('Silakan upload data terlebih dahulu pada halaman Upload Data')
             return
             
-        if st.button('Lakukan Preprocessing'):
+        if st.button('Execute Preprocessing'):
             try:
                 df = st.session_state['original_data']
 
@@ -369,7 +410,7 @@ def main():
                 st.dataframe(df[numeric_columns].describe())
                 
                 # 2. Pengecekan Missing Values
-                st.write("### Pengecekan Missing Values")
+                st.write("### Check for Missing Values")
                 missing_values = df.isnull().sum()
                 missing_df = pd.DataFrame({
                     'Kolom': missing_values.index,
@@ -379,11 +420,11 @@ def main():
 
                 # 3. Tangani Missing Values
                 df = handle_missing_values(df)
-                st.write("### Data Setelah Penanganan Missing Values")
+                st.write("### Data After Handling Missing Values")
                 st.dataframe(df)
                 
                 # 4. Pengecekan Outliers Sebelum Penanganan
-                st.write("### Pengecekan Outliers Sebelum Penanganan")
+                st.write("### Outlier Check Before Handling")
                 columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
                                   'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
                 
@@ -404,11 +445,11 @@ def main():
 
                 # 5. Tangani Outliers
                 df = handle_outliers_iqr(df, columns_to_check)
-                st.write("### Data Setelah Penanganan Outliers")
+                st.write("### Data After Outlier Handling")
                 st.dataframe(df)
 
                 # 6. Pengecekan Outliers Setelah Penanganan
-                st.write("### Pengecekan Outliers Setelah Penanganan")
+                st.write("### Outlier Check After Handling")
                 Q1 = df[columns_to_check].quantile(0.25)
                 Q3 = df[columns_to_check].quantile(0.75)
                 IQR = Q3 - Q1
@@ -424,12 +465,12 @@ def main():
                 st.dataframe(outlier_df_after)
                 
                 # 7. Normalisasi dan Pembobotan
-                st.write("### Data Setelah Normalisasi dan Pembobotan")
+                st.write("### Data After Normalization and Weighting")
                 df_normalized = weighted_normalize(df)
                 st.session_state['df_normalized'] = df_normalized
                 st.dataframe(df_normalized)
                 
-                st.success('Preprocessing selesai!')
+                st.success('Preprocessing completed!')
             except Exception as e:
                 st.error(f'Error saat preprocessing: {str(e)}')
                 
@@ -437,7 +478,7 @@ def main():
         st.title('PSO and K-Medoids Analysis')
     
         if 'df_normalized' not in st.session_state:
-            st.warning('Silakan lakukan preprocessing terlebih dahulu')
+            st.warning('Please perform preprocessing first.')
             return
 
         # Inisialisasi dictionary untuk menyimpan semua hasil clustering
@@ -457,7 +498,7 @@ def main():
         
         # Tambahkan kolom untuk menampilkan hasil evaluasi
         if analyze_button:
-            with st.spinner('Sedang melakukan clustering...'):
+            with st.spinner('Clustering in progress...'):
                 df_clustered, cluster_info = perform_clustering(st.session_state['df_normalized'], n_clusters)
                 
                 # Simpan hasil clustering untuk nilai K ini
@@ -470,7 +511,7 @@ def main():
 
         # Tampilkan hasil untuk semua K yang sudah dianalisis
         if st.session_state['all_clustering_results']:
-            st.write("## Hasil Analisis untuk Semua Nilai K")
+            st.write("## Analysis Results for All K Values")
             
             # Tampilkan tabs untuk setiap nilai K
             tabs = st.tabs([f"K={k}" for k in sorted(st.session_state['all_clustering_results'].keys())])
@@ -480,16 +521,16 @@ def main():
                     results = st.session_state['all_clustering_results'][k]
                     
                     # Visualisasi t-SNE untuk nilai K ini
-                    st.write(f"### Visualisasi Cluster untuk K={k}")
+                    st.write(f"### Cluster Visualization for K={k}")
                     plt_tsne = visualize_kmedoids_clusters(results['df_clustered'], results['cluster_info'])
                     st.pyplot(plt_tsne)
                     
                     # Informasi medoid terbaik
-                    st.write(f"### Medoid Terbaik untuk K={k}")
+                    st.write(f"### Best Medoid for K={k}")
                     st.dataframe(results['cluster_info']['medoid_rows'])
                     
                     # Distribusi cluster
-                    st.write(f"### Distribusi Cluster untuk K={k}")
+                    st.write(f"### Cluster Distribution for K={k}")
                     cluster_distribution = f"Distribusi Cluster (K={k}): \n"
                     for j, count in enumerate(results['distribution']):
                         cluster_distribution += f"Cluster {j}: {count} titik data\n"
@@ -498,7 +539,7 @@ def main():
                     # Menghapus download button dari tab individu
             
             # Tampilkan perbandingan Silhouette Score
-            st.write("### Perbandingan Silhouette Score")
+            st.write("### Silhouette Score Comparison")
             comparison_data = {
                 'K': list(st.session_state['all_clustering_results'].keys()),
                 'Silhouette Score': [results['silhouette'] for results in st.session_state['all_clustering_results'].values()]
@@ -511,55 +552,44 @@ def main():
             # Visualisasi perbandingan
             plt.figure(figsize=(10, 6))
             plt.plot(comparison_df['K'], comparison_df['Silhouette Score'], marker='o')
-            plt.title('Perbandingan Silhouette Score untuk Berbagai Nilai K')
+            plt.title('Silhouette Score Comparison for Different K Values')
             plt.xlabel('Jumlah Cluster (K)')
             plt.ylabel('Silhouette Score')
             plt.grid(True)
             st.pyplot(plt)
             
             # Download section
-            st.write("### Download Hasil Clustering")
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                k_to_download = st.selectbox(
-                    'Pilih nilai K untuk didownload:',
-                    sorted(st.session_state['all_clustering_results'].keys())
+            st.write("### Download Clustering Results")
+            
+            # Pilih K untuk download
+            k_to_download = st.selectbox(
+                'Select the K value to download:',
+                sorted(st.session_state['all_clustering_results'].keys())
+            )
+            
+            # Tombol download
+            if k_to_download is not None:
+                csv = st.session_state['all_clustering_results'][k_to_download]['df_clustered'].to_csv(index=False)
+                st.download_button(
+                    label=f"Download Results for K={k_to_download}",
+                    data=csv,
+                    file_name=f'hasil_clustering_k{k_to_download}.csv',
+                    mime='text/csv',
+                    key='download_clustering_results'
                 )
-            with col2:
-                if k_to_download is not None:
-                    csv = st.session_state['all_clustering_results'][k_to_download]['df_clustered'].to_csv(index=False)
-                    st.download_button(
-                        label=f"Download Hasil K={k_to_download}",
-                        data=csv,
-                        file_name=f'hasil_clustering_k{k_to_download}.csv',
-                        mime='text/csv'
-                    )
             
             # Tambahkan tombol untuk reset hasil
-            if st.button('Reset Semua Hasil Analisis'):
+            if st.button('Reset All Analysis Results'):
                 st.session_state['all_clustering_results'] = {}
                 st.experimental_rerun()
 
-def search_by_id(df, cluster_results):
-    st.write("### Detailed Data Search")
-    
-    # Input ID
-    search_id = st.text_input('Enter the ID to search:')
-    
-    # Pilih K
-    available_k = list(cluster_results.keys())
-    selected_k = st.selectbox('Select the Number of Clusters (K):', available_k)
-    
-    if st.button('Cari'):
-        # Logika pencarian berdasarkan ID dan K
-        result = df[df['ID'] == int(search_id)]
-        cluster = cluster_results[selected_k]['df_clustered'][cluster_results[selected_k]['df_clustered']['ID'] == int(search_id)]['Cluster'].values
-        
-        if not result.empty:
-            st.write("Detail Data:")
-            st.dataframe(result)
-            st.write(f"Cluster: {cluster[0]}")
-        else:
-            st.warning("ID not found.")
-
+            # Tambahkan pemanggilan search_by_id
+            if st.session_state['all_clustering_results']:
+                st.write("## Detailed Data Lookup")
+                search_by_id(
+                    st.session_state['original_data'], 
+                    st.session_state['df_normalized'], 
+                    st.session_state['all_clustering_results']
+                )
+      
 main()
