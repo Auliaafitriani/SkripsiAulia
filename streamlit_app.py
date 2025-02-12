@@ -540,223 +540,26 @@ def main():
                 st.session_state['all_clustering_results'] = {}
                 st.experimental_rerun()
 
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Papa from 'papaparse';
-import _ from 'lodash';
-
-// Komponen Search by ID yang baru
-const SearchByIDComponent = () => {
-  const [csvData, setCsvData] = useState([]);
-  const [originalData, setOriginalData] = useState([]);
-  const [searchId, setSearchId] = useState('');
-  const [selectedK, setSelectedK] = useState('');
-  const [clusterResults, setClusterResults] = useState({});
-  const [searchResult, setSearchResult] = useState(null);
-
-  // Opsi K yang tersedia berdasarkan analisis sebelumnya
-  const availableKValues = ['2', '3', '4', '5'];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await window.fs.readFile('data.csv');
-        const text = new TextDecoder().decode(response);
+def search_by_id(df, cluster_results):
+    st.write("### Detailed Data Search")
+    
+    # Input ID
+    search_id = st.text_input('Enter the ID to search:')
+    
+    # Pilih K
+    available_k = list(cluster_results.keys())
+    selected_k = st.selectbox('Select the Number of Clusters (K):', available_k)
+    
+    if st.button('Cari'):
+        # Logika pencarian berdasarkan ID dan K
+        result = df[df['ID'] == int(search_id)]
+        cluster = cluster_results[selected_k]['df_clustered'][cluster_results[selected_k]['df_clustered']['ID'] == int(search_id)]['Cluster'].values
         
-        Papa.parse(text, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            setCsvData(results.data);
-            setOriginalData(results.data);
-          }
-        });
-
-        // Membaca hasil clustering
-        const clusterResponse = await window.fs.readFile('cluster_results.json');
-        const clusterText = new TextDecoder().decode(clusterResponse);
-        setClusterResults(JSON.parse(clusterText));
-      } catch (error) {
-        console.error('Error reading files:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const handleSearch = () => {
-    // Cari data berdasarkan ID
-    const result = originalData.find(row => 
-      row.id.toString() === searchId
-    );
-
-    if (result) {
-      // Temukan cluster untuk ID ini
-      const clusterInfo = clusterResults[selectedK]?.find(
-        cluster => cluster.points.includes(parseInt(searchId))
-      );
-
-      setSearchResult({
-        ...result,
-        cluster: clusterInfo ? `Cluster ${clusterInfo.centroid}` : 'Tidak ditemukan dalam cluster'
-      });
-    } else {
-      setSearchResult(null);
-    }
-  };
-
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Pencarian Detail dan Cluster</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex space-x-4 mb-4">
-          <Input 
-            type="text" 
-            placeholder="Masukkan ID" 
-            value={searchId}
-            onChange={(e) => setSearchId(e.target.value)}
-            className="flex-grow"
-          />
-          <Select 
-            value={selectedK} 
-            onValueChange={setSelectedK}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Pilih Jumlah Cluster (K)" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableKValues.map(k => (
-                <SelectItem key={k} value={k}>
-                  Cluster K = {k}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={handleSearch}>Cari</Button>
-        </div>
-
-        {searchResult && (
-          <div className="bg-gray-100 p-4 rounded">
-            <h3 className="text-lg font-semibold mb-2">Hasil Pencarian</h3>
-            <table className="w-full">
-              <tbody>
-                {Object.entries(searchResult).map(([key, value]) => (
-                  <tr key={key} className="border-b">
-                    <td className="font-medium p-2">{key}</td>
-                    <td className="p-2">{value?.toString() || 'N/A'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// Komponen Utama Dashboard
-const MainDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [clusteringResults, setClusteringResults] = useState(null);
-  const [psoResults, setPsoResults] = useState(null);
-
-  useEffect(() => {
-    const loadResults = async () => {
-      try {
-        // Membaca hasil PSO
-        const psoResponse = await window.fs.readFile('pso_results.json');
-        const psoText = new TextDecoder().decode(psoResponse);
-        setPsoResults(JSON.parse(psoText));
-
-        // Membaca hasil Clustering
-        const clusterResponse = await window.fs.readFile('cluster_results.json');
-        const clusterText = new TextDecoder().decode(clusterResponse);
-        setClusteringResults(JSON.parse(clusterText));
-      } catch (error) {
-        console.error('Error loading results:', error);
-      }
-    };
-
-    loadResults();
-  }, []);
-
-  return (
-    <div className="p-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="pso">Hasil PSO</TabsTrigger>
-          <TabsTrigger value="clustering">Clustering</TabsTrigger>
-          <TabsTrigger value="search">Pencarian Detail</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ringkasan Analisis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Konten ringkasan overview */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Statistik PSO</h3>
-                  {psoResults && (
-                    <pre>{JSON.stringify(psoResults, null, 2)}</pre>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Hasil Clustering</h3>
-                  {clusteringResults && (
-                    <pre>{JSON.stringify(clusteringResults, null, 2)}</pre>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pso">
-          <Card>
-            <CardHeader>
-              <CardTitle>Hasil Optimasi Partikel Swarm (PSO)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {psoResults && (
-                <pre>{JSON.stringify(psoResults, null, 2)}</pre>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="clustering">
-          <Card>
-            <CardHeader>
-              <CardTitle>Hasil Clustering K-Medoids</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {clusteringResults && (
-                <pre>{JSON.stringify(clusteringResults, null, 2)}</pre>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="search">
-          <SearchByIDComponent />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default MainDashboard;
+        if not result.empty:
+            st.write("Detail Data:")
+            st.dataframe(result)
+            st.write(f"Cluster: {cluster[0]}")
+        else:
+            st.warning("ID not found.")
 
 main()
