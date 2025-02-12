@@ -208,16 +208,16 @@ def visualize_kmedoids_clusters(df_clustered, cluster_info, compression_factor=0
     return plt
 
 def search_by_id(df_original, df_normalized, cluster_results):
-    st.write("### Pencarian Detail Data")
+    st.write("### Detailed Data Search")
     
     # Input ID
-    search_id = st.text_input('Masukkan ID untuk dicari')
+    search_id = st.text_input('Enter the ID to be searched:')
     
     # Pilih K
     available_k = list(cluster_results.keys())
-    selected_k = st.selectbox('Pilih Jumlah Cluster (K)', available_k)
+    selected_k = st.selectbox('Select the Number of Clusters (K):', available_k)
     
-    if st.button('Cari'):
+    if st.button('search'):
         try:
             # Pastikan search_id adalah integer
             search_id_int = int(search_id)
@@ -230,23 +230,23 @@ def search_by_id(df_original, df_normalized, cluster_results):
             cluster = cluster_df[cluster_df['ID'] == search_id_int]['Cluster'].values
             
             if not original_data.empty:
-                st.write("### Detail Data Asli:")
+                st.write("### Data Details:")
                 st.dataframe(original_data)
                 
                 if len(cluster) > 0:
                     st.write(f"### Cluster: {cluster[0]}")
                     
                     # Tampilkan detail cluster
-                    st.write("### Informasi Cluster:")
+                    st.write("### Cluster Information:")
                     cluster_details = cluster_df[cluster_df['Cluster'] == cluster[0]]
                     st.write(f"Jumlah anggota Cluster {cluster[0]}: {len(cluster_details)}")
                 else:
-                    st.warning("ID tidak ditemukan dalam cluster yang dipilih.")
+                    st.warning("ID not found in the selected cluster.")
             else:
-                st.warning("ID tidak ditemukan.")
+                st.warning("ID not found.")
         
         except ValueError:
-            st.error("Harap masukkan ID yang valid (angka).")
+            st.error("Please enter a valid ID.")
 
 def main():
     # Sidebar for navigation
