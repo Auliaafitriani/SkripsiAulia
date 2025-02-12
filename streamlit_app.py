@@ -323,8 +323,8 @@ def main():
             """)
 
     elif selected == 'Upload Data':
-    st.title('Upload Data')
-    uploaded_file = st.file_uploader("Select an Excel file.", type=['xlsx'])
+        st.title('Upload Data')
+        uploaded_file = st.file_uploader("Select an Excel file.", type=['xlsx'])
     
         if uploaded_file is not None:
             # Read Excel file
