@@ -326,101 +326,101 @@ def main():
     st.title('Upload Data')
     uploaded_file = st.file_uploader("Select an Excel file.", type=['xlsx'])
     
-    if uploaded_file is not None:
-        # Read Excel file
-        df = pd.read_excel(uploaded_file)
-        st.write("### Data")
-        st.dataframe(df)
-        # Save to session state
-        st.session_state['original_data'] = df
-        st.success('Data uploaded successfully!')
-
-elif selected == 'Preprocessing':
-    st.title('Data Preprocessing')
-    
-    # Cek apakah data sudah diunggah
-    if 'original_data' not in st.session_state or st.session_state['original_data'] is None:
-        st.warning('Please upload the data first on the Upload Data page.')
-        return
-    
-    if st.button('Execute Preprocessing'):
-        try:
-            df = st.session_state['original_data']
-
-            # 1. Statistik Deskriptif
-            st.write("### Descriptive Statistics")
-            numeric_columns = df.select_dtypes(include=[np.float64, np.int64]).columns
-            descriptive_stats = df[numeric_columns].describe()
-            st.session_state['descriptive_stats'] = descriptive_stats
-            st.dataframe(descriptive_stats)
-            
-            # 2. Pengecekan Missing Values
-            st.write("### Check for Missing Values")
-            missing_values = df.isnull().sum()
-            missing_df = pd.DataFrame({
-                'Column': missing_values.index,
-                'Number of Missing Values': missing_values.values
-            })
-            st.session_state['missing_values'] = missing_df
-            st.dataframe(missing_df)
-
-            # 3. Tangani Missing Values
-            df = handle_missing_values(df)
-            st.write("### Data After Handling Missing Values")
+        if uploaded_file is not None:
+            # Read Excel file
+            df = pd.read_excel(uploaded_file)
+            st.write("### Data")
             st.dataframe(df)
-            
-            # 4. Pengecekan Outliers Sebelum Penanganan
-            st.write("### Outlier Check Before Handling")
-            columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
-                              'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
-            
-            # Hitung outliers sebelum penanganan
-            Q1 = df[columns_to_check].quantile(0.25)
-            Q3 = df[columns_to_check].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            
-            outliers_before = ((df[columns_to_check] < lower_bound) | 
-                             (df[columns_to_check] > upper_bound)).sum()
-            outlier_df_before = pd.DataFrame({
-                'Kolom': outliers_before.index,
-                'Jumlah Outlier': outliers_before.values
-            })
-            st.session_state['outliers_before'] = outlier_df_before
-            st.dataframe(outlier_df_before)
+            # Save to session state
+            st.session_state['original_data'] = df
+            st.success('Data uploaded successfully!')
 
-            # 5. Tangani Outliers
-            df = handle_outliers_iqr(df, columns_to_check)
-            st.write("### Data After Outlier Handling")
-            st.dataframe(df)
-
-            # 6. Pengecekan Outliers Setelah Penanganan
-            st.write("### Outlier Check After Handling")
-            Q1 = df[columns_to_check].quantile(0.25)
-            Q3 = df[columns_to_check].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            
-            outliers_after = ((df[columns_to_check] < lower_bound) | 
-                            (df[columns_to_check] > upper_bound)).sum()
-            outlier_df_after = pd.DataFrame({
-                'Kolom': outliers_after.index,
-                'Jumlah Outlier': outliers_after.values
-            })
-            st.session_state['outliers_after'] = outlier_df_after
-            st.dataframe(outlier_df_after)
-            
-            # 7. Normalisasi dan Pembobotan
-            st.write("### Data After Normalization and Weighting")
-            df_normalized = weighted_normalize(df)
-            st.session_state['df_normalized'] = df_normalized
-            st.dataframe(df_normalized)
-            
-            st.success('Preprocessing completed!')
-        except Exception as e:
-            st.error(f'Error during preprocessing: {str(e)}')
+    elif selected == 'Preprocessing':
+        st.title('Data Preprocessing')
+        
+        # Cek apakah data sudah diunggah
+        if 'original_data' not in st.session_state or st.session_state['original_data'] is None:
+            st.warning('Please upload the data first on the Upload Data page.')
+            return
+        
+        if st.button('Execute Preprocessing'):
+            try:
+                df = st.session_state['original_data']
+    
+                # 1. Statistik Deskriptif
+                st.write("### Descriptive Statistics")
+                numeric_columns = df.select_dtypes(include=[np.float64, np.int64]).columns
+                descriptive_stats = df[numeric_columns].describe()
+                st.session_state['descriptive_stats'] = descriptive_stats
+                st.dataframe(descriptive_stats)
+                
+                # 2. Pengecekan Missing Values
+                st.write("### Check for Missing Values")
+                missing_values = df.isnull().sum()
+                missing_df = pd.DataFrame({
+                    'Column': missing_values.index,
+                    'Number of Missing Values': missing_values.values
+                })
+                st.session_state['missing_values'] = missing_df
+                st.dataframe(missing_df)
+    
+                # 3. Tangani Missing Values
+                df = handle_missing_values(df)
+                st.write("### Data After Handling Missing Values")
+                st.dataframe(df)
+                
+                # 4. Pengecekan Outliers Sebelum Penanganan
+                st.write("### Outlier Check Before Handling")
+                columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
+                                  'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
+                
+                # Hitung outliers sebelum penanganan
+                Q1 = df[columns_to_check].quantile(0.25)
+                Q3 = df[columns_to_check].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+                
+                outliers_before = ((df[columns_to_check] < lower_bound) | 
+                                 (df[columns_to_check] > upper_bound)).sum()
+                outlier_df_before = pd.DataFrame({
+                    'Kolom': outliers_before.index,
+                    'Jumlah Outlier': outliers_before.values
+                })
+                st.session_state['outliers_before'] = outlier_df_before
+                st.dataframe(outlier_df_before)
+    
+                # 5. Tangani Outliers
+                df = handle_outliers_iqr(df, columns_to_check)
+                st.write("### Data After Outlier Handling")
+                st.dataframe(df)
+    
+                # 6. Pengecekan Outliers Setelah Penanganan
+                st.write("### Outlier Check After Handling")
+                Q1 = df[columns_to_check].quantile(0.25)
+                Q3 = df[columns_to_check].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+                
+                outliers_after = ((df[columns_to_check] < lower_bound) | 
+                                (df[columns_to_check] > upper_bound)).sum()
+                outlier_df_after = pd.DataFrame({
+                    'Kolom': outliers_after.index,
+                    'Jumlah Outlier': outliers_after.values
+                })
+                st.session_state['outliers_after'] = outlier_df_after
+                st.dataframe(outlier_df_after)
+                
+                # 7. Normalisasi dan Pembobotan
+                st.write("### Data After Normalization and Weighting")
+                df_normalized = weighted_normalize(df)
+                st.session_state['df_normalized'] = df_normalized
+                st.dataframe(df_normalized)
+                
+                st.success('Preprocessing completed!')
+            except Exception as e:
+                st.error(f'Error during preprocessing: {str(e)}')
                 
     elif selected == 'PSO and K-Medoids Results':
         st.title('PSO and K-Medoids Analysis')
