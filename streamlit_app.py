@@ -585,7 +585,7 @@ def main():
 
             # Tambahkan pemanggilan search_by_id
             if st.session_state['all_clustering_results']:
-                st.write("## Detailed Data Lookup")
+                st.write("## ")
                 search_by_id(
                     st.session_state['original_data'], 
                     st.session_state['df_normalized'], 
