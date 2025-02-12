@@ -322,7 +322,7 @@ def main():
             The uploaded data must contain only the specified columns.
             """)
 
-        elif selected == 'Upload Data':
+    elif selected == 'Upload Data':
         st.title('Upload Data')
         uploaded_file = st.file_uploader("Select an Excel file.", type=['xlsx'])
         
