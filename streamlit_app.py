@@ -9,6 +9,10 @@ from sklearn.metrics import silhouette_score
 import random
 from sklearn.manifold import TSNE
 
+# Define valid columns globally
+VALID_COLUMNS = ['ID', 'PEKERJAAN', 'JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
+                 'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
+
 # [Previous class and function definitions remain the same - include all the classes and functions from the original code]
 class PSOKMedoids:
     def __init__(self, data, n_clusters, max_iter=100, n_particles=30, w=0.7, c1=1.5, c2=1.5):
@@ -76,7 +80,22 @@ class PSOKMedoids:
                     particles[i].append(random.randint(0, len(self.data)-1))
 
         return global_best, *self.evaluate_clustering(global_best)
-        
+
+def validate_columns(df):
+    """Validate that the DataFrame contains only the allowed columns."""
+    current_columns = set(df.columns)
+    required_columns = set(VALID_COLUMNS)
+    
+    if not required_columns.issubset(current_columns):
+        missing_columns = required_columns - current_columns
+        raise ValueError(f"The data is missing the required columns: {', '.join(missing_columns)}")
+    
+    extra_columns = current_columns - required_columns
+    if extra_columns:
+        raise ValueError(f"The data contains additional columns that are not allowed: {', '.join(extra_columns)}")
+    
+    return True
+
 def perform_clustering(df_normalized, n_clusters=5):
     # Pisahkan kolom yang tidak akan di-cluster
     data = df_normalized.drop(columns=['ID', 'PEKERJAAN']).values
@@ -203,6 +222,20 @@ def main():
             """,
             unsafe_allow_html=True
         )
+
+        # Add Terms & Conditions section
+        with st.expander("Terms & Conditions"):
+            st.markdown("""
+            **Allowed Columns:**
+            - ID
+            - PEKERJAAN
+            - JUMLAH ASET MOBIL
+            - JUMLAH ASET MOTOR
+            - JUMLAH ASET RUMAH/TANAH/SAWAH
+            - PENDAPATAN
+            
+            The uploaded data must contain only the specified columns.
+            """)
         
         # Menu navigasi dengan option_menu
         selected = option_menu(None,  # Hapus judul menu
@@ -295,6 +328,32 @@ def main():
             df_normalized = pd.concat([id_column, df_normalized], axis=1)
 
             return df_normalized
+
+        def handle_outliers_iqr(df, columns):
+            """Tangani outlier menggunakan metode IQR."""
+            df_copy = df.copy()
+            for column in columns:
+                # Menghitung kuartil pertama (Q1) dan ketiga (Q3)
+                Q1 = df_copy[column].quantile(0.25)
+                Q3 = df_copy[column].quantile(0.75)
+                IQR = Q3 - Q1  # Rentang Interquartile
+
+                # Menentukan batas bawah dan batas atas
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+
+                # Mengganti nilai yang berada di luar batas dengan batas terdekat
+                df_copy[column] = df_copy[column].apply(
+                    lambda x: lower_bound if x < lower_bound else (upper_bound if x > upper_bound else x)
+                )
+            return df_copy
+
+        def handle_missing_values(df):
+            """Tangani missing values dengan mean untuk kolom numerik."""
+            df_copy = df.copy()
+            for column in df_copy.select_dtypes(include=['number']).columns:
+                df_copy[column] = df_copy[column].fillna(df_copy[column].mean())
+            return df_copy
         
         if 'original_data' not in st.session_state or st.session_state['original_data'] is None:
             st.warning('Silakan upload data terlebih dahulu pada halaman Upload Data')
@@ -304,13 +363,12 @@ def main():
             try:
                 df = st.session_state['original_data']
 
-                # Statistik Deskriptif
+                # 1. Statistik Deskriptif
                 st.write("### Statistik Deskriptif")
-                # Pilih kolom numerik untuk statistik deskriptif
                 numeric_columns = df.select_dtypes(include=[np.float64, np.int64]).columns
                 st.dataframe(df[numeric_columns].describe())
                 
-                # Check Missing Values
+                # 2. Pengecekan Missing Values
                 st.write("### Pengecekan Missing Values")
                 missing_values = df.isnull().sum()
                 missing_df = pd.DataFrame({
@@ -318,28 +376,54 @@ def main():
                     'Jumlah Missing Values': missing_values.values
                 })
                 st.dataframe(missing_df)
+
+                # 3. Tangani Missing Values
+                df = handle_missing_values(df)
+                st.write("### Data Setelah Penanganan Missing Values")
+                st.dataframe(df)
                 
-                # Check Outliers
-                st.write("### Pengecekan Outliers")
-                # Pilih kolom numerik untuk analisis outlier
-                selected_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
+                # 4. Pengecekan Outliers Sebelum Penanganan
+                st.write("### Pengecekan Outliers Sebelum Penanganan")
+                columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
+                                  'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
                 
-                # Hitung Q1, Q3, dan IQR
-                Q1 = df[selected_columns].quantile(0.25)
-                Q3 = df[selected_columns].quantile(0.75)
+                # Hitung outliers sebelum penanganan
+                Q1 = df[columns_to_check].quantile(0.25)
+                Q3 = df[columns_to_check].quantile(0.75)
                 IQR = Q3 - Q1
                 lower_bound = Q1 - 1.5 * IQR
                 upper_bound = Q3 + 1.5 * IQR
                 
-                # Hitung jumlah outlier
-                outliers = ((df[selected_columns] < lower_bound) | (df[selected_columns] > upper_bound)).sum()
-                outlier_df = pd.DataFrame({
-                    'Kolom': outliers.index,
-                    'Jumlah Outlier': outliers.values
+                outliers_before = ((df[columns_to_check] < lower_bound) | 
+                                 (df[columns_to_check] > upper_bound)).sum()
+                outlier_df_before = pd.DataFrame({
+                    'Kolom': outliers_before.index,
+                    'Jumlah Outlier': outliers_before.values
                 })
-                st.dataframe(outlier_df)
+                st.dataframe(outlier_df_before)
+
+                # 5. Tangani Outliers
+                df = handle_outliers_iqr(df, columns_to_check)
+                st.write("### Data Setelah Penanganan Outliers")
+                st.dataframe(df)
+
+                # 6. Pengecekan Outliers Setelah Penanganan
+                st.write("### Pengecekan Outliers Setelah Penanganan")
+                Q1 = df[columns_to_check].quantile(0.25)
+                Q3 = df[columns_to_check].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
                 
-                # Lakukan normalisasi
+                outliers_after = ((df[columns_to_check] < lower_bound) | 
+                                (df[columns_to_check] > upper_bound)).sum()
+                outlier_df_after = pd.DataFrame({
+                    'Kolom': outliers_after.index,
+                    'Jumlah Outlier': outliers_after.values
+                })
+                st.dataframe(outlier_df_after)
+                
+                # 7. Normalisasi dan Pembobotan
                 st.write("### Data Setelah Normalisasi dan Pembobotan")
                 df_normalized = weighted_normalize(df)
                 st.session_state['df_normalized'] = df_normalized
@@ -355,6 +439,10 @@ def main():
         if 'df_normalized' not in st.session_state:
             st.warning('Silakan lakukan preprocessing terlebih dahulu')
             return
+
+        # Inisialisasi dictionary untuk menyimpan semua hasil clustering
+        if 'all_clustering_results' not in st.session_state:
+            st.session_state['all_clustering_results'] = {}
         
         # Kolom untuk interaksi
         col1, col2 = st.columns(2)
@@ -372,57 +460,303 @@ def main():
             with st.spinner('Sedang melakukan clustering...'):
                 df_clustered, cluster_info = perform_clustering(st.session_state['df_normalized'], n_clusters)
                 
-                # Visualisasi t-SNE
-                st.write("### Visualisasi Cluster")
-                plt_tsne = visualize_kmedoids_clusters(df_clustered, cluster_info)
-                st.pyplot(plt_tsne)
-                
-                # Tampilkan perbandingan silhouette score
-                if 'clustering_results' not in st.session_state:
-                    st.session_state['clustering_results'] = {}
-                
-                st.session_state['clustering_results'][n_clusters] = {
+                # Simpan hasil clustering untuk nilai K ini
+                st.session_state['all_clustering_results'][n_clusters] = {
+                    'df_clustered': df_clustered,
+                    'cluster_info': cluster_info,
                     'silhouette': cluster_info['silhouette_score'],
                     'distribution': cluster_info['cluster_sizes']
                 }
-                
-                if len(st.session_state['clustering_results']) > 0:
-                    st.write("### Perbandingan Silhouette Score")
-                    comparison_data = {
-                        'K': list(st.session_state['clustering_results'].keys()),
-                        'Silhouette Score': [info['silhouette'] for info in st.session_state['clustering_results'].values()]
-                    }
-                    comparison_df = pd.DataFrame(comparison_data)
-                    st.dataframe(comparison_df)
-                    
-                    # Visualisasi perbandingan
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(comparison_df['K'], comparison_df['Silhouette Score'], marker='o')
-                    plt.title('Perbandingan Silhouette Score untuk Berbagai Nilai K')
-                    plt.xlabel('Jumlah Cluster (K)')
-                    plt.ylabel('Silhouette Score')
-                    plt.grid(True)
-                    st.pyplot(plt)
-                
-                # Best medoids information
-                st.write("### Medoid Terbaik")
-                st.dataframe(cluster_info['medoid_rows'])
 
-                st.write("### Distribusi Cluster:")
-                cluster_distribution = "Distribusi Cluster: \n"
-                for i, count in enumerate(cluster_info['cluster_sizes']):
-                    cluster_distribution += f"Cluster {i}: {count} titik data\n"
-                st.text(cluster_distribution)
-                
-                # Download buttons
-                col1, col2 = st.columns(2)
-                with col1:
-                    csv = df_clustered.to_csv(index=False)
+        # Tampilkan hasil untuk semua K yang sudah dianalisis
+        if st.session_state['all_clustering_results']:
+            st.write("## Hasil Analisis untuk Semua Nilai K")
+            
+            # Tampilkan tabs untuk setiap nilai K
+            tabs = st.tabs([f"K={k}" for k in sorted(st.session_state['all_clustering_results'].keys())])
+            
+            for i, k in enumerate(sorted(st.session_state['all_clustering_results'].keys())):
+                with tabs[i]:
+                    results = st.session_state['all_clustering_results'][k]
+                    
+                    # Visualisasi t-SNE untuk nilai K ini
+                    st.write(f"### Visualisasi Cluster untuk K={k}")
+                    plt_tsne = visualize_kmedoids_clusters(results['df_clustered'], results['cluster_info'])
+                    st.pyplot(plt_tsne)
+                    
+                    # Informasi medoid terbaik
+                    st.write(f"### Medoid Terbaik untuk K={k}")
+                    st.dataframe(results['cluster_info']['medoid_rows'])
+                    
+                    # Distribusi cluster
+                    st.write(f"### Distribusi Cluster untuk K={k}")
+                    cluster_distribution = f"Distribusi Cluster (K={k}): \n"
+                    for j, count in enumerate(results['distribution']):
+                        cluster_distribution += f"Cluster {j}: {count} titik data\n"
+                    st.text(cluster_distribution)
+                    
+                    # Menghapus download button dari tab individu
+            
+            # Tampilkan perbandingan Silhouette Score
+            st.write("### Perbandingan Silhouette Score")
+            comparison_data = {
+                'K': list(st.session_state['all_clustering_results'].keys()),
+                'Silhouette Score': [results['silhouette'] for results in st.session_state['all_clustering_results'].values()]
+            }
+            comparison_df = pd.DataFrame(comparison_data)
+            
+            # Tampilkan tabel perbandingan
+            st.dataframe(comparison_df)
+            
+            # Visualisasi perbandingan
+            plt.figure(figsize=(10, 6))
+            plt.plot(comparison_df['K'], comparison_df['Silhouette Score'], marker='o')
+            plt.title('Perbandingan Silhouette Score untuk Berbagai Nilai K')
+            plt.xlabel('Jumlah Cluster (K)')
+            plt.ylabel('Silhouette Score')
+            plt.grid(True)
+            st.pyplot(plt)
+            
+            # Download section
+            st.write("### Download Hasil Clustering")
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                k_to_download = st.selectbox(
+                    'Pilih nilai K untuk didownload:',
+                    sorted(st.session_state['all_clustering_results'].keys())
+                )
+            with col2:
+                if k_to_download is not None:
+                    csv = st.session_state['all_clustering_results'][k_to_download]['df_clustered'].to_csv(index=False)
                     st.download_button(
-                        label=f"Download Hasil K={n_clusters} (CSV)",
+                        label=f"Download Hasil K={k_to_download}",
                         data=csv,
-                        file_name=f'hasil_clustering_k{n_clusters}.csv',
+                        file_name=f'hasil_clustering_k{k_to_download}.csv',
                         mime='text/csv'
                     )
+            
+            # Tambahkan tombol untuk reset hasil
+            if st.button('Reset Semua Hasil Analisis'):
+                st.session_state['all_clustering_results'] = {}
+                st.experimental_rerun()
+
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Papa from 'papaparse';
+import _ from 'lodash';
+
+// Komponen Search by ID yang baru
+const SearchByIDComponent = () => {
+  const [csvData, setCsvData] = useState([]);
+  const [originalData, setOriginalData] = useState([]);
+  const [searchId, setSearchId] = useState('');
+  const [selectedK, setSelectedK] = useState('');
+  const [clusterResults, setClusterResults] = useState({});
+  const [searchResult, setSearchResult] = useState(null);
+
+  // Opsi K yang tersedia berdasarkan analisis sebelumnya
+  const availableKValues = ['2', '3', '4', '5'];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await window.fs.readFile('data.csv');
+        const text = new TextDecoder().decode(response);
         
+        Papa.parse(text, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            setCsvData(results.data);
+            setOriginalData(results.data);
+          }
+        });
+
+        // Membaca hasil clustering
+        const clusterResponse = await window.fs.readFile('cluster_results.json');
+        const clusterText = new TextDecoder().decode(clusterResponse);
+        setClusterResults(JSON.parse(clusterText));
+      } catch (error) {
+        console.error('Error reading files:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleSearch = () => {
+    // Cari data berdasarkan ID
+    const result = originalData.find(row => 
+      row.id.toString() === searchId
+    );
+
+    if (result) {
+      // Temukan cluster untuk ID ini
+      const clusterInfo = clusterResults[selectedK]?.find(
+        cluster => cluster.points.includes(parseInt(searchId))
+      );
+
+      setSearchResult({
+        ...result,
+        cluster: clusterInfo ? `Cluster ${clusterInfo.centroid}` : 'Tidak ditemukan dalam cluster'
+      });
+    } else {
+      setSearchResult(null);
+    }
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Pencarian Detail dan Cluster</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex space-x-4 mb-4">
+          <Input 
+            type="text" 
+            placeholder="Masukkan ID" 
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            className="flex-grow"
+          />
+          <Select 
+            value={selectedK} 
+            onValueChange={setSelectedK}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Pilih Jumlah Cluster (K)" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableKValues.map(k => (
+                <SelectItem key={k} value={k}>
+                  Cluster K = {k}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleSearch}>Cari</Button>
+        </div>
+
+        {searchResult && (
+          <div className="bg-gray-100 p-4 rounded">
+            <h3 className="text-lg font-semibold mb-2">Hasil Pencarian</h3>
+            <table className="w-full">
+              <tbody>
+                {Object.entries(searchResult).map(([key, value]) => (
+                  <tr key={key} className="border-b">
+                    <td className="font-medium p-2">{key}</td>
+                    <td className="p-2">{value?.toString() || 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Komponen Utama Dashboard
+const MainDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [clusteringResults, setClusteringResults] = useState(null);
+  const [psoResults, setPsoResults] = useState(null);
+
+  useEffect(() => {
+    const loadResults = async () => {
+      try {
+        // Membaca hasil PSO
+        const psoResponse = await window.fs.readFile('pso_results.json');
+        const psoText = new TextDecoder().decode(psoResponse);
+        setPsoResults(JSON.parse(psoText));
+
+        // Membaca hasil Clustering
+        const clusterResponse = await window.fs.readFile('cluster_results.json');
+        const clusterText = new TextDecoder().decode(clusterResponse);
+        setClusteringResults(JSON.parse(clusterText));
+      } catch (error) {
+        console.error('Error loading results:', error);
+      }
+    };
+
+    loadResults();
+  }, []);
+
+  return (
+    <div className="p-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="pso">Hasil PSO</TabsTrigger>
+          <TabsTrigger value="clustering">Clustering</TabsTrigger>
+          <TabsTrigger value="search">Pencarian Detail</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ringkasan Analisis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Konten ringkasan overview */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Statistik PSO</h3>
+                  {psoResults && (
+                    <pre>{JSON.stringify(psoResults, null, 2)}</pre>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Hasil Clustering</h3>
+                  {clusteringResults && (
+                    <pre>{JSON.stringify(clusteringResults, null, 2)}</pre>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pso">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hasil Optimasi Partikel Swarm (PSO)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {psoResults && (
+                <pre>{JSON.stringify(psoResults, null, 2)}</pre>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="clustering">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hasil Clustering K-Medoids</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {clusteringResults && (
+                <pre>{JSON.stringify(clusteringResults, null, 2)}</pre>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="search">
+          <SearchByIDComponent />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default MainDashboard;
+
 main()
