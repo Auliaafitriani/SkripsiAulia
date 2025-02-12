@@ -220,14 +220,14 @@ def search_by_id(df_original, df_normalized, cluster_results):
     if st.button('search'):
         try:
             # Pastikan search_id adalah integer
-            search_id_int = int(search_id)
+            search_id = (search_id)
             
             # Cari data asli berdasarkan ID
-            original_data = df_original[df_original['ID'] == search_id_int]
+            original_data = df_original[df_original['ID'] == search_id]
             
             # Cari cluster untuk ID ini di hasil clustering untuk K yang dipilih
             cluster_df = cluster_results[selected_k]['df_clustered']
-            cluster = cluster_df[cluster_df['ID'] == search_id_int]['Cluster'].values
+            cluster = cluster_df[cluster_df['ID'] == search_id]['Cluster'].values
             
             if not original_data.empty:
                 st.write("### Data Details:")
@@ -405,7 +405,7 @@ def main():
                 df = st.session_state['original_data']
 
                 # 1. Statistik Deskriptif
-                st.write("### Statistik Deskriptif")
+                st.write("### Descriptive Statistics.")
                 numeric_columns = df.select_dtypes(include=[np.float64, np.int64]).columns
                 st.dataframe(df[numeric_columns].describe())
                 
@@ -413,8 +413,8 @@ def main():
                 st.write("### Check for Missing Values")
                 missing_values = df.isnull().sum()
                 missing_df = pd.DataFrame({
-                    'Kolom': missing_values.index,
-                    'Jumlah Missing Values': missing_values.values
+                    'Column.': missing_values.index,
+                    'Number of Missing Values.': missing_values.values
                 })
                 st.dataframe(missing_df)
 
