@@ -340,7 +340,7 @@ def main():
             st.session_state['original_data'] = df
             st.success('Data uploaded successfully!')
     
-        elif selected == 'Preprocessing':
+    elif selected == 'Preprocessing':
         st.title('Data Preprocessing')
         
         # Fungsi-fungsi sebelumnya tetap sama (weighted_normalize, handle_outliers_iqr, handle_missing_values)
