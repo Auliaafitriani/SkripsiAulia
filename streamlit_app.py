@@ -568,7 +568,17 @@ def main():
 
             # Tambahkan bagian untuk menampilkan dataframe dengan kolom cluster
             st.write(f"### Clustered Data for K={k}")
-            st.dataframe(results['df'])
+            original_data = st.session_state['original_data'].copy()
+            clustered_data = results['df_clustered']
+            
+            # Tambahkan kolom cluster ke data asli berdasarkan ID
+            merged_data = original_data.merge(
+                clustered_data[['ID', 'Cluster']], 
+                on='ID', 
+                how='left'
+            )
+            
+            st.dataframe(merged_data)
       
             # Download section
             st.write("### Download Clustering Results")
@@ -606,5 +616,6 @@ def main():
             if st.button('Reset All Analysis Results'):
                 st.session_state['all_clustering_results'] = {}
                 st.experimental_rerun()
-      
+
+
 main()
