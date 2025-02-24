@@ -453,14 +453,20 @@ def main():
     
                 # 4. Pengecekan Outliers Setelah Penanganan
                 st.write("### Checking Outliers After Handling")
-                Q1 = df[columns_to_check].quantile(0.25)
-                Q3 = df[columns_to_check].quantile(0.75)
+                columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
+                                  'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
+                
+                # Gunakan fungsi handle_outliers_iqr yang sudah didefinisikan sebelumnya
+                df_handled = handle_outliers_iqr(df, columns_to_check)
+                
+                Q1 = df_handled[columns_to_check].quantile(0.25)
+                Q3 = df_handled[columns_to_check].quantile(0.75)
                 IQR = Q3 - Q1
                 lower_bound = Q1 - 1.5 * IQR
                 upper_bound = Q3 + 1.5 * IQR
                 
-                outliers_after = ((df[columns_to_check] < lower_bound) | 
-                                (df[columns_to_check] > upper_bound)).sum()
+                outliers_after = ((df_handled[columns_to_check] < lower_bound) | 
+                                (df_handled[columns_to_check] > upper_bound)).sum()
                 outlier_df_after = pd.DataFrame({
                     'Column': outliers_after.index,
                     'Number of Outliers': outliers_after.values
