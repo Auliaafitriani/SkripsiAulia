@@ -545,8 +545,6 @@ def main():
                     for j, count in enumerate(results['distribution']):
                         cluster_distribution += f"Cluster {j}: {count} titik data\n"
                     st.text(cluster_distribution)
-                    
-                    # Menghapus download button dari tab individu
             
             # Tampilkan perbandingan Silhouette Score
             st.write("### Silhouette Score Comparison")
@@ -567,7 +565,11 @@ def main():
             plt.ylabel('Silhouette Score')
             plt.grid(True)
             st.pyplot(plt)
-            
+
+            # Tambahkan bagian untuk menampilkan dataframe dengan kolom cluster
+            st.write(f"### Clustered Data for K={k}")
+            st.dataframe(results['df_clustered'])
+      
             # Download section
             st.write("### Download Clustering Results")
             
@@ -579,7 +581,19 @@ def main():
             
             # Tombol download
             if k_to_download is not None:
-                csv = st.session_state['all_clustering_results'][k_to_download]['df_clustered'].to_csv(index=False)
+                # Gabungkan data asli dengan kolom cluster
+                original_data = st.session_state['original_data'].copy()
+                clustered_data = st.session_state['all_clustering_results'][k_to_download]['df_clustered']
+                
+                # Tambahkan kolom cluster ke data asli berdasarkan ID
+                merged_data = original_data.merge(
+                    clustered_data[['ID', 'Cluster']], 
+                    on='ID', 
+                    how='left'
+                )
+                
+                # Konversi ke CSV untuk download
+                csv = merged_data.to_csv(index=False)
                 st.download_button(
                     label=f"Download Results for K={k_to_download}",
                     data=csv,
