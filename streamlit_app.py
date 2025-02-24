@@ -97,8 +97,31 @@ def validate_columns(df):
     return True
 
 def perform_clustering(df_normalized, n_clusters=5):
+    # Tambahkan penanganan outliers sebelum clustering
+    columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
+                        'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
+    
     # Pisahkan kolom yang tidak akan di-cluster
-    data = df_normalized.drop(columns=['ID', 'PEKERJAAN']).values
+    df_numeric = df_normalized.drop(columns=['ID', 'PEKERJAAN'])
+    
+    # Tangani outliers pada data numerik
+    for column in columns_to_check:
+        Q1 = df_numeric[column].quantile(0.25)
+        Q3 = df_numeric[column].quantile(0.75)
+        IQR = Q3 - Q1
+        
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        
+        df_numeric[column] = df_numeric[column].apply(
+            lambda x: lower_bound if x < lower_bound else (upper_bound if x > upper_bound else x)
+        )
+    
+    # Gabungkan kembali dengan ID dan PEKERJAAN
+    df_normalized_cleaned = pd.concat([df_normalized[['ID', 'PEKERJAAN']], df_numeric], axis=1)
+    
+    # Pisahkan kolom yang tidak akan di-cluster untuk proses clustering
+    data = df_normalized_cleaned.drop(columns=['ID', 'PEKERJAAN']).values
     
     # Gunakan kelas PSOKMedoids untuk clustering
     pso = PSOKMedoids(data, n_clusters=n_clusters)
@@ -107,7 +130,7 @@ def perform_clustering(df_normalized, n_clusters=5):
     optimal_medoids, silhouette, labels, distribution = pso.optimize()
 
     # Tambahkan kolom cluster ke dataframe
-    df_clustered = df_normalized.copy()
+    df_clustered = df_normalized_cleaned.copy()
     df_clustered['Cluster'] = labels
     
     # Persiapkan informasi cluster
@@ -115,7 +138,7 @@ def perform_clustering(df_normalized, n_clusters=5):
         'medoids': optimal_medoids, 
         'silhouette_score': silhouette, 
         'cluster_sizes': distribution,
-        'medoid_rows': df_normalized.iloc[optimal_medoids]
+        'medoid_rows': df_normalized_cleaned.iloc[optimal_medoids]
     }
     
     return df_clustered, cluster_info
