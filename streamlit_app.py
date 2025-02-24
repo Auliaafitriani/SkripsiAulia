@@ -568,7 +568,7 @@ def main():
 
             # Tambahkan bagian untuk menampilkan dataframe dengan kolom cluster
             st.write(f"### Clustered Data for K={k}")
-            st.dataframe(results['df_clustered'])
+            st.dataframe(results['df'])
       
             # Download section
             st.write("### Download Clustering Results")
@@ -606,14 +606,5 @@ def main():
             if st.button('Reset All Analysis Results'):
                 st.session_state['all_clustering_results'] = {}
                 st.experimental_rerun()
-
-            # Tambahkan pemanggilan search_by_id
-            if st.session_state['all_clustering_results']:
-                st.write("## ")
-                search_by_id(
-                    st.session_state['original_data'], 
-                    st.session_state['df_normalized'], 
-                    st.session_state['all_clustering_results']
-                )
       
 main()
