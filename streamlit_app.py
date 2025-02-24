@@ -9,6 +9,147 @@ from sklearn.metrics import silhouette_score
 import random
 from sklearn.manifold import TSNE
 
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from streamlit_option_menu import option_menu
+
+# Tambahkan konfigurasi Streamlit untuk styling
+st.set_page_config(
+    page_title="PriorityAid Analytics",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS untuk styling lebih menarik
+def local_css():
+    st.markdown("""
+    <style>
+    /* Background dan warna utama */
+    .stApp {
+        background-color: #f0f2f6;
+        color: #2c3e50;
+    }
+
+    /* Styling judul */
+    h1, h2, h3 {
+        color: #3498db;
+        font-weight: bold;
+    }
+
+    /* Styling sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 2px solid #e0e0e0;
+    }
+
+    /* Styling tombol */
+    .stButton>button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+
+    .stButton>button:hover {
+        background-color: #2980b9;
+        transform: scale(1.05);
+    }
+
+    /* Styling dataframe */
+    .dataframe {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Styling tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        color: #2c3e50;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #e9ecef;
+    }
+
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: #3498db;
+        color: white;
+    }
+
+    /* Logo styling */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Panggil fungsi CSS di awal main()
+def main():
+    local_css()  # Tambahkan ini di awal fungsi main
+
+    # Sisanya tetap sama seperti kode sebelumnya
+    with st.sidebar:
+        # Tambahkan class 'logo-container' untuk logo
+        st.markdown(
+            """
+            <div class='logo-container'>
+                <img src="https://raw.githubusercontent.com/Auliaafitriani/SkripsiAulia/main/LogoPriorityAid.png" 
+                     alt="Logo" 
+                     width="250" 
+                     style="margin-top: 0;">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Styling option menu dengan warna yang lebih menarik
+        selected = option_menu(None, 
+                           ['About', 'Upload Data', 'Preprocessing', 
+                            'PSO and K-Medoids Results'],
+                           menu_icon='cast',
+                           icons=['house', 'cloud-upload', 'gear', 'graph-up'],
+                           default_index=0,
+                           styles={
+                               "container": {
+                                   "padding": "0px", 
+                                   "background-color": "#f8f9fa"
+                               },
+                               "icon": {
+                                   "color": "#3498db", 
+                                   "font-size": "17px"
+                               }, 
+                               "nav-link": {
+                                   "font-size": "15px", 
+                                   "text-align": "left", 
+                                   "margin":"1px", 
+                                   "color": "#2c3e50",
+                                   "--hover-color": "#e9ecef"
+                               },
+                               "nav-link-selected": {
+                                   "background-color": "#3498db", 
+                                   "color": "white"
+                               },
+                           })
+
 # Define valid columns globally
 VALID_COLUMNS = ['ID', 'PEKERJAAN', 'JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
                  'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
