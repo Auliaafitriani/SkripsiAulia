@@ -429,14 +429,9 @@ def main():
                 })
                 st.session_state['missing_values'] = missing_df
                 st.dataframe(missing_df)
-    
-                # 3. Tangani Missing Values
-                df = handle_missing_values(df)
-                st.write("### Data After Handling Missing Values")
-                st.dataframe(df)
                 
-                # 4. Pengecekan Outliers Sebelum Penanganan
-                st.write("### Outlier Check Before Handling")
+                # 3. Pengecekan Outliers Sebelum Penanganan
+                st.write("### Checking Outliers Before Handling")
                 columns_to_check = ['JUMLAH ASET MOBIL', 'JUMLAH ASET MOTOR', 
                                   'JUMLAH ASET RUMAH/TANAH/SAWAH', 'PENDAPATAN']
                 
@@ -456,13 +451,8 @@ def main():
                 st.session_state['outliers_before'] = outlier_df_before
                 st.dataframe(outlier_df_before)
     
-                # 5. Tangani Outliers
-                df = handle_outliers_iqr(df, columns_to_check)
-                st.write("### Data After Outlier Handling")
-                st.dataframe(df)
-    
-                # 6. Pengecekan Outliers Setelah Penanganan
-                st.write("### Outlier Check After Handling")
+                # 4. Pengecekan Outliers Setelah Penanganan
+                st.write("### Checking Outliers After Handling")
                 Q1 = df[columns_to_check].quantile(0.25)
                 Q3 = df[columns_to_check].quantile(0.75)
                 IQR = Q3 - Q1
@@ -478,7 +468,7 @@ def main():
                 st.session_state['outliers_after'] = outlier_df_after
                 st.dataframe(outlier_df_after)
                 
-                # 7. Normalisasi dan Pembobotan
+                # 5. Normalisasi dan Pembobotan
                 st.write("### Data After Normalization and Weighting")
                 df_normalized = weighted_normalize(df)
                 st.session_state['df_normalized'] = df_normalized
